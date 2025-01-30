@@ -500,7 +500,6 @@ def unit_dropdown():
             ], className="mt-2",)
 
 def bag_dropdown():
-
     return  dbc.Row([
                 dbc.Label('Bag Choices:', className="my-label"),
                 dbc.Col(
@@ -518,7 +517,6 @@ def bag_dropdown():
 
 
 def hunt_code_dropdown():
-
     return  dbc.Row([
                 dbc.Label('Resident Success Pie Chart by hunt code:', className="my-label"),
                 dbc.Col(
@@ -531,15 +529,6 @@ def hunt_code_dropdown():
                     ),
                 ),
             ], className="mt-2",)
-
-# # Generate a pie chart for each hunt code
-# def create_pie_chart(row, percent_success, draw_choice):
-#     return px.pie(
-#         names=['Resident {} Success'.format(draw_choice), 'Resident Failure'],
-#         values=[row[percent_success], 100 - row['resident_percent_success']],
-#         title=f"{row['Hunt Code']} - Resident {draw_choice} Success",
-#         hole=0.3
-#     )
 
 # Function to create pie charts
 def create_pie_chart(row, column, label):
@@ -563,13 +552,6 @@ app.layout = [
     html.Tr([html.Td(hunt_code_dropdown())]),
     html.Tr([html.Td(html.Br())]),
     html.Tr([html.Td(html.Div(id='filtered_result_table'))]),
-    html.Div([
-        html.Tr([html.Td(html.Div([dcc.Graph(id="percent_odds_graph")])), 
-                html.Td(html.Div([dcc.Graph(id="percent_odds_graph_1stDraw")]))]),
-        html.Tr([html.Td(html.Div([dcc.Graph(id="percent_odds_graph_2ndDraw")])),
-                html.Td(html.Div([dcc.Graph(id="percent_odds_graph_3rdDraw")]))
-                ])
-    ]),
     # Pie chart for resident success rate
     html.Div([
         html.H2("Resident Success Rates by Hunt Code"),
@@ -579,7 +561,8 @@ app.layout = [
                     html.Td([html.Img(src=encoded_image, style={'width': '100%'})])
             ]),
     html.Div(id='output'),
-    dcc.Store(id="query_results")
+    dcc.Store(id="query_results"),
+    dcc.Store(id="proclamation_results")
 ]
 
 
@@ -588,7 +571,7 @@ app.layout = [
     Input('query_results', 'data'))
 def generate_hunt_dropdown(query_values):
 
-    if query_values != "":
+    if query_values != None and query_values !=  {"": ""}:
         # Convert the data to a DataFrame
         df = pd.DataFrame.from_dict(query_values, orient='index')
 
@@ -603,31 +586,24 @@ def get_df_for_pie_chart(df, new_column, total_column, factored_column):
 
 # Callback to update merged data and pie charts based on selected unit
 @app.callback(
-    [Output('merged-data', 'children'),
-     Output('pie-chart-container', 'children')],
-    [Input('unit-dropdown', 'value'),
-     Input('query_results', 'data'),
+    Output('pie-chart-container', 'children'),
+    [Input('query_results', 'data'),
      Input('proclamation_results', 'data'),]
 )
-def update_dashboard(selected_unit, dataframe1, dataframe2):
-    # Merge the two dataframes on 'Hunt Code' and 'Licenses' (inner join)
-    merged_df = pd.merge(dataframe1, dataframe2, on=['Hunt Code', 'Licenses'], how='inner')
-    # Filter the merged DataFrame based on the selected unit
-    filtered_df = merged_df[merged_df['Unit/Description'] == selected_unit]
+def update_dashboard(dataframe1, dataframe2):
+    if dataframe1 is not None and dataframe1 != {"": ""} and dataframe2 is not None and dataframe2 != {"": ""}:
+        # Merge the two dataframes on 'Hunt Code' and 'Licenses' (inner join)
+        df1 = pd.DataFrame.from_dict(dataframe1, orient='index')
+        df2 = pd.DataFrame(dataframe2)
+        filtered_df = pd.merge(df1, df2, on=['Hunt Code', 'Licenses'], how='inner')
+    else:
+        return ['']
 
     # Calculate the percentage values before generating pie charts
     filtered_df = get_df_for_pie_chart(filtered_df, 'resident_percent_success', 'Resident_successfull_draw_total', 'Total_resident')
     filtered_df = get_df_for_pie_chart(filtered_df, 'resident_1stDraw_percent_success', 'resident_1st_success', '1st_resident')
     filtered_df = get_df_for_pie_chart(filtered_df, 'resident_2ndDraw_percent_success', 'resident_2nd_success', '2nd_resident')
     filtered_df = get_df_for_pie_chart(filtered_df, 'resident_3rdDraw_percent_success', 'resident_3rd_success', '3rd_resident')
-
-    # Generate the table of merged Data
-    merged_table = html.Table(
-        # Header
-        [html.Tr([html.Th(col) for col in filtered_df.columns])] +
-        # Rows
-        [html.Tr([html.Td(filtered_df.iloc[i][col]) for col in filtered_df.columns]) for i in range(len(filtered_df))]
-    )
 
     # Create a list to store pie chart components (dcc.Graph)
     pie_chart_components = []
@@ -652,44 +628,7 @@ def update_dashboard(selected_unit, dataframe1, dataframe2):
             style={'display': 'flex', 'justify-content': 'space-evenly', 'margin-bottom': '20px'}
         ))
 
-    return merged_table, pie_chart_components
-
-
-@app.callback(
-    Output("percent_odds_graph", "figure"),
-    Output("percent_odds_graph_1stDraw", "figure"),
-    Output("percent_odds_graph_2ndDraw", "figure"),
-    Output("percent_odds_graph_3rdDraw", "figure"),
-    Input('query_results', 'data'),
-    Input('hunt-dropdown', 'value'))
-def generate_charts(query_values, selected_hunt_code):
-
-    if query_values != "":
-        # Convert the data to a DataFrame
-        df = pd.DataFrame.from_dict(query_values, orient='index')
-        try:
-            df_fig_1 = get_df_for_pie_chart(df, 'resident_percent_success', 'Resident_successfull_draw_total', 'Total_resident')
-            df_fig_2 = get_df_for_pie_chart(df, 'resident_1stDraw_percent_success', 'resident_1st_success', '1st_resident')
-            df_fig_3 = get_df_for_pie_chart(df, 'resident_2ndDraw_percent_success', 'resident_2nd_success', '2nd_resident')
-            df_fig_4 = get_df_for_pie_chart(df, 'resident_3rdDraw_percent_success', 'resident_3rd_success', '3rd_resident')
-        except KeyError:
-            return ({}, {}, {}, {})
-        # Create individual pie charts for each hunt code
-        # for idx, row in df.iterrows():
-        try:
-            row_fig_1 = df_fig_1[df_fig_1['Hunt Code'] == selected_hunt_code].iloc[0]
-            row_fig_2 = df_fig_2[df_fig_2['Hunt Code'] == selected_hunt_code].iloc[0]
-            row_fig_3 = df_fig_3[df_fig_3['Hunt Code'] == selected_hunt_code].iloc[0]
-            row_fig_4 = df_fig_4[df_fig_4['Hunt Code'] == selected_hunt_code].iloc[0]
-        except IndexError:
-            return ({}, {}, {}, {})
-        fig1 = create_pie_chart(row_fig_1, "resident_percent_success", "overall")
-        fig2 = create_pie_chart(row_fig_2, "resident_1stDraw_percent_success", "1stDraw")
-        fig3 = create_pie_chart(row_fig_3, "resident_2ndDraw_percent_success", "2ndDraw")
-        fig4 = create_pie_chart(row_fig_4, "resident_3rdDraw_percent_success", "3rdDraw")
-        return fig1, fig2, fig3, fig4
-    else:
-        return ({}, {}, {}, {})
+    return pie_chart_components
 
 
 @app.callback(
@@ -762,29 +701,25 @@ def update_output_div(animal_choice_deer, animal_choice_elk,
 
     if animal_choice_deer:
         csv_filename = '2024OddsSummary_Deer.csv'
-        proclamation_df = scraper.scrape_for_deer()
     elif animal_choice_elk:
         csv_filename = '2024OddsSummary_Elk.csv'
-        proclamation_df = scraper.scrape_for_elk()
     elif csv_filename == "":
-        return "", "", ""
-        # return ""
+        return "", "", {"": ""}, {"": ""}
 
     odds_summary = parser_func("input/{}".format(csv_filename))
     if unit_number is None:
-        return "", "you must choose a unit number", ""
-        # return "", query_result
+        return "", "you must choose a unit number", {"": ""}, {"": ""}
     elif bag_choice is None:
-        return "", "you must choose a bag", ""
-        # return "", query_result
+        return "", "you must choose a bag", {"": ""}, {"": ""}
     else:
         try:
             query_result = query_odds(odds_summary, unit_number, bag_choice, residency_choice, choice_result, success_total, success_percentage, add_private, add_youth,)
-            
+            if animal_choice_deer:
+                proclamation_df = scraper.scrape_for_deer()
+            elif animal_choice_elk:
+                proclamation_df = scraper.scrape_for_deer()
         except TypeError as error:
-            # return "", "{}".format(error)
-            return "", query_result
-        # return dash_table.DataTable(data=query_result, page_size=10), "", query_result#"{}".format(query_result)
+            return "", query_result, {"": ""}, {"": ""}
 
     try:
         df_display = pd.DataFrame(query_result)
@@ -805,8 +740,8 @@ def update_output_div(animal_choice_deer, animal_choice_elk,
         df_display = df_display.drop(columns=["outfitter_total_success"])
     except KeyError:
         pass
-    
-    return dash_table.DataTable(data=df_display.to_dict('records'), page_size=10), "", {index: value for index, value in enumerate(query_result)}, {index: value for index, value in enumerate(proclamation_df)}
+
+    return dash_table.DataTable(data=df_display.to_dict('records'), page_size=10), "", {index: value for index, value in enumerate(query_result)}, proclamation_df.to_dict("records")
 
 
 

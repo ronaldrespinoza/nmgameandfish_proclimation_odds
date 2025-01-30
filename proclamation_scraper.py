@@ -53,14 +53,14 @@ def parse_hunting_data(text, animal_choice):
             pattern = get_elk_regex()
         elif animal_choice == "deer":
             pattern = get_deer_regex()
-        print(line)
+
         match = pattern.match(line)
         if match:
             hunt_type = match.group(1).strip()
             hunt_dates = match.group(2).strip()
             hunt_code = match.group(3).strip()
             fee_type = match.group(4).strip()
-            licenses = match.group(5).strip()
+            licenses = int(match.group(5).strip())
             bag_limit = match.group(6).strip()
 
             data.append([unit, hunt_type, hunt_dates, hunt_code, fee_type, licenses, bag_limit])
