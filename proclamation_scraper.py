@@ -97,27 +97,3 @@ def scrape_for_elk():
     scraped_text = scrape_pdf_page_range(pdf_path, elk_start_page, elk_end_page)
     return parse_hunting_data(scraped_text, animal_choice)
 
-# def main():
-#     # test_get_elk_regex()
-#     pdf_path = "input/HNT RIB 2025-26_ENGLISH_Online.pdf"
-#     # pdf_path = "HNT-RIB-2023-24-FINAL_ENGLISH_Online.pdf"
-
-#     # animal_choice = 'deer'
-#     # deer_start_page = 55
-#     # deer_end_page = 68
-#     # scraped_text = scrape_pdf_page_range(pdf_path, deer_start_page, deer_end_page)
-
-#     animal_choice = 'elk'
-#     # elk_start_page = 75
-#     # elk_end_page = 95
-
-#     elk_start_page = 84
-#     elk_end_page = 84
-
-
-
-#     df = parse_hunting_data(scraped_text, animal_choice)
-#     print(df)
-
-# if __name__ == "__main__":
-#     main()
