@@ -42,11 +42,11 @@ def parse_hunting_data(text, animal_choice):
 
     for line in lines:
 
-        if line.startswith("Unit"):
+        if line.startswith("Unit\Description"):
             unit = line.strip()
             continue
         elif line.startswith("Premium Statewide"):
-            unit = line.strip()
+            unit = "statewide"
             continue
 
         if animal_choice == "elk":

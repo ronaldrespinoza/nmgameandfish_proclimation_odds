@@ -1,4 +1,5 @@
 import csv
+import re
 import sys
 import enum
 import time
@@ -210,7 +211,7 @@ class GetListFromQuery():
         return [d for d in some_list if (d["3rd"] <= d["Licenses"])]
     
     def get_unit_by_number(some_list, unit_number):
-        return [d for d in some_list if (d["Unit"].__contains__("{}".format(unit_number)))]
+        return [d for d in some_list if (d["Unit"].__contains__("{}".format(unit_number[0])))]
     
     def get_all_by_bag(some_list, bag):
         return [d for d in some_list if (d["Bag"].__contains__("{}".format(bag)))]
@@ -286,20 +287,18 @@ def filter_on_boolean_switches(filtered_list, residency_choice, choice_result, s
             df = df.drop(columns=["outfitter_percentage_allocation"])
     except KeyError:
         pass
-
+    
     return df.to_dict('records')
 
 def query_odds(odds_summary, unit_number, bag_choice, residency_choice, choice_result, success_total, success_percentage, add_private, add_youth,):
     filtered_list = []
-    for unit_num in unit_number:
-        filtered_list = GetListFromQuery.get_unit_by_number(odds_summary, unit_num)
+    filtered_list = GetListFromQuery.get_unit_by_number(odds_summary, unit_number)
     for bag in bag_choice:
         filtered_list = GetListFromQuery.get_all_by_bag(filtered_list, bag)
     if not(add_private):
         filtered_list = GetListFromQuery.get_no_private(filtered_list)
     if not(add_youth):
         filtered_list = GetListFromQuery.get_no_youth(filtered_list)
-
     filtered_list = filter_on_boolean_switches(filtered_list, residency_choice, choice_result, success_total, success_percentage)
     return filtered_list
 
@@ -503,27 +502,32 @@ def create_filtering_table():
     return table
 
 def unit_dropdown():
-    unit_options = []
-    idx = 1
+    # Read the units from a txt file
+    with open('input//unit_dropdown.txt', 'r') as file:
+        units = file.readlines()
+    
+    # Strip any unwanted whitespace characters (like newlines)
+    units = [unit.strip() for unit in units]
+    
+    # Create the options for the dropdown menu
+    unit_options = [{'label': unit, 'value': unit} for unit in units]
+    
+    # Return the layout for the dropdown
+    return dbc.Row([
+        dbc.Label('Unit Choices:', className="my-label"),
+        dbc.Col(
+            dcc.Dropdown(
+                id='unit_number',
+                className='dash-bootstrap',
+                options=unit_options,
+                value="",  # Set a default value
+                multi=True,
+                clearable=True,
+                style={'float': 'left', "width": "200px"}
+            ),
+        ),
+    ], className="mt-2")
 
-    while idx < 60:
-        unit_options.append({'label': '{}'.format(idx), 'value': idx})
-        idx += 1
-    unit_options.append({'label': 'statewide', 'value': 'statewide'})
-    return  dbc.Row([
-                dbc.Label('Unit Choices:', className="my-label"),
-                dbc.Col(
-                    dcc.Dropdown(
-                        id='unit_number',
-                        className='dash-bootstrap',
-                        options=unit_options,
-                        value="lag_0",
-                        multi=True,
-                        clearable=True,
-                        style={'float': 'left',"width":"200px"}
-                    ),
-                ),
-            ], className="mt-2",)
 
 def bag_dropdown():
     return  dbc.Row([
@@ -642,11 +646,15 @@ def update_dashboard(dataframe1, dataframe2, selected_hunt_code,
                       show_resident_successfull_draw_total, show_nonresident_successfull_draw_total, show_outfitter_successfull_draw_total,
                       show_resident_successfull_draw_percentage, show_nonresident_successfull_draw_percentage, show_outfitter_successfull_draw_percentage,
                      ):
+    
     if dataframe1 is not None and dataframe1 != {"": ""} and dataframe2 is not None and dataframe2 != {"": ""}:
         # Merge the two dataframes on 'Hunt Code' and 'Licenses' (inner join)
         df1 = pd.DataFrame.from_dict(dataframe1, orient='index')
         df2 = pd.DataFrame(dataframe2)
-        filtered_df = pd.merge(df1, df2, on=['Hunt Code', 'Licenses', 'Bag', 'Unit'], how='inner')
+        try:
+            filtered_df = pd.merge(df1, df2, on=['Hunt Code', 'Licenses', 'Bag'], how='inner')
+        except KeyError:
+            pass
     else:
         return [''], None
 
@@ -657,7 +665,6 @@ def update_dashboard(dataframe1, dataframe2, selected_hunt_code,
     filtered_df = get_df_for_pie_chart(filtered_df, 'resident_3rdDraw_percent_success', 'resident_3rd_success', '3rd_resident')
 
     if selected_hunt_code is not None and selected_hunt_code != "":
-        print(selected_hunt_code)
         filtered_df = filtered_df[filtered_df['Hunt Code'] == selected_hunt_code]
     # Create a list to store pie chart components (dcc.Graph)
     pie_chart_components = []
@@ -780,8 +787,6 @@ def update_output_div(animal_choice_deer, animal_choice_elk,
                 proclamation_df = scraper.scrape_for_elk()
         except TypeError as error:
             return query_result, {"": ""}, {"": ""}
-
-    df_display = drop_success(query_result)
 
     return "", {index: value for index, value in enumerate(query_result)}, proclamation_df.to_dict("records")
 
