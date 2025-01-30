@@ -720,7 +720,7 @@ def update_output_div(animal_choice_deer, animal_choice_elk,
             if animal_choice_deer:
                 proclamation_df = scraper.scrape_for_deer()
             elif animal_choice_elk:
-                proclamation_df = scraper.scrape_for_deer()
+                proclamation_df = scraper.scrape_for_elk()
         except TypeError as error:
             return "", query_result, {"": ""}, {"": ""}
 
