@@ -347,7 +347,7 @@ def encode_image(image_path):
         encoded_string = base64.b64encode(img_file.read()).decode('utf-8')
     return f"data:image/jpeg;base64,{encoded_string}"
 
-encoded_image = encode_image("C://Users//admin//Documents//NMGF_Hunting//Map-New-Mexico-State-Game-Management-Unit-Boundaries.jpg")
+encoded_image = encode_image("C://Users//admin//Documents//NMGF_Hunting//input//Map-New-Mexico-State-Game-Management-Unit-Boundaries.jpg")
 
 def create_filtering_table():
     row1 = html.Tr([html.Td("Deer"),
@@ -702,7 +702,7 @@ def update_output_div(animal_choice_deer, animal_choice_elk,
         return "", "", ""
         # return ""
 
-    odds_summary = parser_func(csv_filename)
+    odds_summary = parser_func("input/{}".format(csv_filename))
     if unit_number is None:
         return "", "you must choose a unit number", ""
         # return "", query_result
@@ -737,7 +737,7 @@ def update_output_div(animal_choice_deer, animal_choice_elk,
         df_display = df_display.drop(columns=["outfitter_total_success"])
     except KeyError:
         pass
-
+    
     return dash_table.DataTable(data=df_display.to_dict('records'), page_size=10), "", {index: value for index, value in enumerate(query_result)}
 
 

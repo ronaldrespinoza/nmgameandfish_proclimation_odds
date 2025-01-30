@@ -83,7 +83,7 @@ def scrape_pdf_page_range(pdf_path, start_page, end_page):
 
 def main():
     # test_get_elk_regex()
-    pdf_path = "HNT RIB 2025-26_ENGLISH_Online.pdf"
+    pdf_path = "input/HNT RIB 2025-26_ENGLISH_Online.pdf"
     # pdf_path = "HNT-RIB-2023-24-FINAL_ENGLISH_Online.pdf"
 
     # animal_choice = 'deer'
@@ -92,8 +92,11 @@ def main():
     # scraped_text = scrape_pdf_page_range(pdf_path, deer_start_page, deer_end_page)
 
     animal_choice = 'elk'
-    elk_start_page = 75
-    elk_end_page = 95
+    # elk_start_page = 75
+    # elk_end_page = 95
+
+    elk_start_page = 84
+    elk_end_page = 84
 
     scraped_text = scrape_pdf_page_range(pdf_path, elk_start_page, elk_end_page)
 
