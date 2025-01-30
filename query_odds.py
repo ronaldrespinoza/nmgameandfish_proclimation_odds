@@ -521,7 +521,7 @@ def hunt_code_dropdown():
                 dbc.Label('Resident Success Pie Chart by hunt code:', className="my-label"),
                 dbc.Col(
                     dcc.Dropdown(
-                        id='hunt-dropdown',
+                        id='hunt_dropdown',
                         options=[],
                         value="",
                         multi=False,
@@ -567,7 +567,7 @@ app.layout = [
 
 
 @app.callback(
-    Output("hunt-dropdown", "options"), 
+    Output("hunt_dropdown", "options"), 
     Input('query_results', 'data'))
 def generate_hunt_dropdown(query_values):
 
@@ -588,9 +588,10 @@ def get_df_for_pie_chart(df, new_column, total_column, factored_column):
 @app.callback(
     Output('pie-chart-container', 'children'),
     [Input('query_results', 'data'),
-     Input('proclamation_results', 'data'),]
+     Input('proclamation_results', 'data'),
+     Input('hunt_dropdown', 'value')]
 )
-def update_dashboard(dataframe1, dataframe2):
+def update_dashboard(dataframe1, dataframe2, selected_hunt_code):
     if dataframe1 is not None and dataframe1 != {"": ""} and dataframe2 is not None and dataframe2 != {"": ""}:
         # Merge the two dataframes on 'Hunt Code' and 'Licenses' (inner join)
         df1 = pd.DataFrame.from_dict(dataframe1, orient='index')
@@ -605,6 +606,8 @@ def update_dashboard(dataframe1, dataframe2):
     filtered_df = get_df_for_pie_chart(filtered_df, 'resident_2ndDraw_percent_success', 'resident_2nd_success', '2nd_resident')
     filtered_df = get_df_for_pie_chart(filtered_df, 'resident_3rdDraw_percent_success', 'resident_3rd_success', '3rd_resident')
 
+    if selected_hunt_code != None and selected_hunt_code != "":
+        filtered_df = filtered_df[filtered_df['Hunt Code'] == selected_hunt_code]
     # Create a list to store pie chart components (dcc.Graph)
     pie_chart_components = []
 
