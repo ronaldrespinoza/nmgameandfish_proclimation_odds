@@ -192,10 +192,10 @@ class Bag(enum.Enum):
 
 class GetListFromQuery():
     def get_no_private(some_list):
-        return [d for d in some_list if not(d["Unit/Description"].__contains__("private land only"))]
+        return [d for d in some_list if not(d["Unit"].__contains__("private land only"))]
     
     def get_no_youth(some_list):
-        return [d for d in some_list if not(d["Unit/Description"].__contains__("youth only"))]
+        return [d for d in some_list if not(d["Unit"].__contains__("youth only"))]
     
     def get_TotalAppliedLicenses_LessThan_ActualLicenses(some_list):
         return [d for d in some_list if (d["T"] <= d["Licenses"])]
@@ -210,12 +210,38 @@ class GetListFromQuery():
         return [d for d in some_list if (d["3rd"] <= d["Licenses"])]
     
     def get_unit_by_number(some_list, unit_number):
-        return [d for d in some_list if (d["Unit/Description"].__contains__("{}".format(unit_number)))]
+        return [d for d in some_list if (d["Unit"].__contains__("{}".format(unit_number)))]
     
     def get_all_by_bag(some_list, bag):
         return [d for d in some_list if (d["Bag"].__contains__("{}".format(bag)))]
-    
-    
+
+def drop_success(result_set):
+    try:
+        df_display = pd.DataFrame(result_set)
+        df_display = df_display.drop(columns=["resident_1st_success"])
+        df_display = df_display.drop(columns=["nonresident_1st_success"])
+        df_display = df_display.drop(columns=["outfitter_1st_success"])
+        df_display = df_display.drop(columns=["resident_2nd_success"])
+        df_display = df_display.drop(columns=["nonresident_2nd_success"])
+        df_display = df_display.drop(columns=["outfitter_2nd_success"])
+        df_display = df_display.drop(columns=["resident_3rd_success"])
+        df_display = df_display.drop(columns=["nonresident_3rd_success"])
+        df_display = df_display.drop(columns=["outfitter_3rd_success"])
+        df_display = df_display.drop(columns=["resident_4th_success"])
+        df_display = df_display.drop(columns=["nonresident_4th_success"])
+        df_display = df_display.drop(columns=["outfitter_4th_success"])
+        df_display = df_display.drop(columns=["resident_total_success"])
+        df_display = df_display.drop(columns=["nonresident_total_success"])
+        df_display = df_display.drop(columns=["outfitter_total_success"])
+        df_display = df_display.drop(columns=["resident_percent_success"])
+        df_display = df_display.drop(columns=["resident_1stDraw_percent_success"])
+        df_display = df_display.drop(columns=["resident_2ndDraw_percent_success"])
+        df_display = df_display.drop(columns=["resident_3rdDraw_percent_success"])
+    except KeyError:
+        pass
+    return df_display
+
+
 def filter_on_boolean_switches(filtered_list, residency_choice, choice_result, success_total, success_percentage):
     df = pd.DataFrame(filtered_list)
     
@@ -279,7 +305,7 @@ def query_odds(odds_summary, unit_number, bag_choice, residency_choice, choice_r
 
 def new_odds_summary_dict():
     odds_summary_dict = {"Hunt Code": "",
-                        "Unit/Description": "",
+                        "Unit": "",
                         "Bag": "",
                         "Licenses": "",
                         "1st_choice_total_submissions": "",
@@ -535,7 +561,7 @@ def create_pie_chart(row, column, label):
     fig = px.pie(
         names=["Success", "Failure"],
         values=[row[column], 100 - row[column]],
-        title=f"{label} - {row['Hunt Code']}",
+        title=f"{label} - {row['Hunt Code']} <br> {row['Hunt Dates']} - {row['Hunt Type']}",
         hole=0.3
     )
     return fig
@@ -551,7 +577,7 @@ app.layout = [
     html.Tr([html.Td(bag_dropdown())]),
     html.Tr([html.Td(hunt_code_dropdown())]),
     html.Tr([html.Td(html.Br())]),
-    html.Tr([html.Td(html.Div(id='filtered_result_table'))]),
+    html.Tr([html.Td(html.Div(id='result_info_table'))]),
     # Pie chart for resident success rate
     html.Div([
         html.H2("Resident Success Rates by Hunt Code"),
@@ -587,18 +613,42 @@ def get_df_for_pie_chart(df, new_column, total_column, factored_column):
 # Callback to update merged data and pie charts based on selected unit
 @app.callback(
     Output('pie-chart-container', 'children'),
+    Output('result_info_table', 'children'),
     [Input('query_results', 'data'),
      Input('proclamation_results', 'data'),
-     Input('hunt_dropdown', 'value')]
+     Input('hunt_dropdown', 'value'),
+    Input(component_id='add_private', component_property='on'),
+    Input(component_id='add_youth', component_property='on'),
+    Input(component_id='show_results_for_resident', component_property='on'),
+    Input(component_id='show_results_for_nonresident', component_property='on'),
+    Input(component_id='show_results_for_outfitter', component_property='on'),
+    Input(component_id='show_results_for_1stchoice', component_property='on'),
+    Input(component_id='show_results_for_2ndchoice', component_property='on'),
+    Input(component_id='show_results_for_3rdchoice', component_property='on'),
+    Input(component_id='show_results_for_4thchoice', component_property='on'),
+    Input(component_id='show_results_for_totals', component_property='on'),
+    Input(component_id='show_resident_successfull_draw_total', component_property='on'),
+    Input(component_id='show_nonresident_successfull_draw_total', component_property='on'),
+    Input(component_id='show_outfitter_successfull_draw_total', component_property='on'),
+    Input(component_id='show_resident_successfull_draw_percentage', component_property='on'),
+    Input(component_id='show_nonresident_successfull_draw_percentage', component_property='on'),
+    Input(component_id='show_outfitter_successfull_draw_percentage', component_property='on'),
+     ]
 )
-def update_dashboard(dataframe1, dataframe2, selected_hunt_code):
+def update_dashboard(dataframe1, dataframe2, selected_hunt_code,
+                      add_private, add_youth,
+                      show_results_for_resident, show_results_for_nonresident, show_results_for_outfitter,
+                      show_results_for_1stchoice, show_results_for_2ndchoice, show_results_for_3rdchoice, show_results_for_4thchoice, show_results_for_totals,
+                      show_resident_successfull_draw_total, show_nonresident_successfull_draw_total, show_outfitter_successfull_draw_total,
+                      show_resident_successfull_draw_percentage, show_nonresident_successfull_draw_percentage, show_outfitter_successfull_draw_percentage,
+                     ):
     if dataframe1 is not None and dataframe1 != {"": ""} and dataframe2 is not None and dataframe2 != {"": ""}:
         # Merge the two dataframes on 'Hunt Code' and 'Licenses' (inner join)
         df1 = pd.DataFrame.from_dict(dataframe1, orient='index')
         df2 = pd.DataFrame(dataframe2)
-        filtered_df = pd.merge(df1, df2, on=['Hunt Code', 'Licenses'], how='inner')
+        filtered_df = pd.merge(df1, df2, on=['Hunt Code', 'Licenses', 'Bag', 'Unit'], how='inner')
     else:
-        return ['']
+        return [''], None
 
     # Calculate the percentage values before generating pie charts
     filtered_df = get_df_for_pie_chart(filtered_df, 'resident_percent_success', 'Resident_successfull_draw_total', 'Total_resident')
@@ -606,7 +656,8 @@ def update_dashboard(dataframe1, dataframe2, selected_hunt_code):
     filtered_df = get_df_for_pie_chart(filtered_df, 'resident_2ndDraw_percent_success', 'resident_2nd_success', '2nd_resident')
     filtered_df = get_df_for_pie_chart(filtered_df, 'resident_3rdDraw_percent_success', 'resident_3rd_success', '3rd_resident')
 
-    if selected_hunt_code != None and selected_hunt_code != "":
+    if selected_hunt_code is not None and selected_hunt_code != "":
+        print(selected_hunt_code)
         filtered_df = filtered_df[filtered_df['Hunt Code'] == selected_hunt_code]
     # Create a list to store pie chart components (dcc.Graph)
     pie_chart_components = []
@@ -629,9 +680,16 @@ def update_dashboard(dataframe1, dataframe2, selected_hunt_code):
         pie_chart_components.append(html.Div(
             children=pie_charts_for_this_hunt_code,
             style={'display': 'flex', 'justify-content': 'space-evenly', 'margin-bottom': '20px'}
-        ))
+        ))    
+    
+    residency_choice = Residency(show_results_for_resident, show_results_for_nonresident, show_results_for_outfitter)
+    choice_result = Choice(show_results_for_1stchoice, show_results_for_2ndchoice, show_results_for_3rdchoice, show_results_for_4thchoice, show_results_for_totals)
+    success_total = SuccessTotals(show_resident_successfull_draw_total, show_nonresident_successfull_draw_total, show_outfitter_successfull_draw_total)
+    success_percentage = SuccessPercentages(show_resident_successfull_draw_percentage, show_nonresident_successfull_draw_percentage, show_outfitter_successfull_draw_percentage)
+    hunt_code_df = filter_on_boolean_switches(filtered_df, residency_choice, choice_result, success_total, success_percentage)
+    hunt_code_df = drop_success(hunt_code_df)
 
-    return pie_chart_components
+    return pie_chart_components, dash_table.DataTable(data=hunt_code_df.to_dict('records'), page_size=10)
 
 
 @app.callback(
@@ -661,7 +719,6 @@ def ensure_only_one_on(animal_choice_deer, n_clicks_deer, animal_choice_elk, n_c
 
 
 @callback(
-    Output(component_id='filtered_result_table', component_property='children'),
     Output('output', 'children'),
     Output("query_results", "data"),
     Output("proclamation_results", "data"),
@@ -707,13 +764,13 @@ def update_output_div(animal_choice_deer, animal_choice_elk,
     elif animal_choice_elk:
         csv_filename = '2024OddsSummary_Elk.csv'
     elif csv_filename == "":
-        return "", "", {"": ""}, {"": ""}
+        return "", {"": ""}, {"": ""}
 
     odds_summary = parser_func("input/{}".format(csv_filename))
     if unit_number is None:
-        return "", "you must choose a unit number", {"": ""}, {"": ""}
+        return "you must choose a unit number", {"": ""}, {"": ""}
     elif bag_choice is None:
-        return "", "you must choose a bag", {"": ""}, {"": ""}
+        return "you must choose a bag", {"": ""}, {"": ""}
     else:
         try:
             query_result = query_odds(odds_summary, unit_number, bag_choice, residency_choice, choice_result, success_total, success_percentage, add_private, add_youth,)
@@ -722,29 +779,11 @@ def update_output_div(animal_choice_deer, animal_choice_elk,
             elif animal_choice_elk:
                 proclamation_df = scraper.scrape_for_elk()
         except TypeError as error:
-            return "", query_result, {"": ""}, {"": ""}
+            return query_result, {"": ""}, {"": ""}
 
-    try:
-        df_display = pd.DataFrame(query_result)
-        df_display = df_display.drop(columns=["resident_1st_success"])
-        df_display = df_display.drop(columns=["nonresident_1st_success"])
-        df_display = df_display.drop(columns=["outfitter_1st_success"])
-        df_display = df_display.drop(columns=["resident_2nd_success"])
-        df_display = df_display.drop(columns=["nonresident_2nd_success"])
-        df_display = df_display.drop(columns=["outfitter_2nd_success"])
-        df_display = df_display.drop(columns=["resident_3rd_success"])
-        df_display = df_display.drop(columns=["nonresident_3rd_success"])
-        df_display = df_display.drop(columns=["outfitter_3rd_success"])
-        df_display = df_display.drop(columns=["resident_4th_success"])
-        df_display = df_display.drop(columns=["nonresident_4th_success"])
-        df_display = df_display.drop(columns=["outfitter_4th_success"])
-        df_display = df_display.drop(columns=["resident_total_success"])
-        df_display = df_display.drop(columns=["nonresident_total_success"])
-        df_display = df_display.drop(columns=["outfitter_total_success"])
-    except KeyError:
-        pass
+    df_display = drop_success(query_result)
 
-    return dash_table.DataTable(data=df_display.to_dict('records'), page_size=10), "", {index: value for index, value in enumerate(query_result)}, proclamation_df.to_dict("records")
+    return "", {index: value for index, value in enumerate(query_result)}, proclamation_df.to_dict("records")
 
 
 

@@ -67,7 +67,7 @@ def parse_hunting_data(text, animal_choice):
         else:
             continue
         
-    return pd.DataFrame(data, columns=["Unit", "Hunt Type", "Hunt Dates", "Hunt Code", "Fee Type", "Licenses", "Bag Limit"])
+    return pd.DataFrame(data, columns=["Unit", "Hunt Type", "Hunt Dates", "Hunt Code", "Fee Type", "Licenses", "Bag"])
 
 def scrape_pdf_page_range(pdf_path, start_page, end_page):
     full_text = ""
