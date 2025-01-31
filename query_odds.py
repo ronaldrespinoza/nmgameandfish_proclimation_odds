@@ -523,7 +523,7 @@ def unit_dropdown():
                 value="",  # Set a default value
                 multi=True,
                 clearable=True,
-                style={'float': 'left', "width": "200px"}
+                style={'float': 'left', "width": "50%"}
             ),
         ),
     ], className="mt-2")
