@@ -221,10 +221,6 @@ class GetListFromQuery():
         return [d for d in some_list if (d["3rd"] <= d["Licenses"])]
     
     def get_unit_by_number(some_list, unit_number):
-        for d in some_list:
-            if unit_number.find(d["Unit"]) != -1:
-                print(d["Unit"])
-                print(unit_number)
         return [d for d in some_list if unit_number.find(d["Unit"]) != -1]
     
     def get_all_by_bag(some_list, bag):
