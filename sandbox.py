@@ -1,15 +1,49 @@
-units = [
-    "Unit 1", "Unit 2", "Unit 3", "Unit 4", "Unit 5", "Unit 6", "Unit 7", "Unit 8", "Unit 9",
-    "Unit 10", "Unit 11", "Unit 12", "Unit 13", "Unit 14", "Unit 15", "Unit 16", "Unit 17", 
-    "Unit 18", "Unit 19", "Unit 20", "Unit 21", "Unit 22", "Unit 23", "Unit 24", "Unit 25", 
-    "Unit 26", "Unit 27", "Unit 28", "Unit 29", "Unit 30", "Unit 31", "Unit 32", "Unit 33", 
-    "Unit 34", "Unit 35", "Unit 36", "Unit 37", "Unit 38", "Unit 39", "Unit 40", "Unit 41", 
-    "Unit 42", "Unit 43", "Unit 44", "Unit 45", "Unit 46", "Unit 47", "Unit 48", "Unit 49", 
-    "Unit 50", "Unit 51", "Unit 52", "Unit 53", "Unit 54", "Unit 55", "Unit 56", "Unit 57", 
-    "Unit 58", "Unit 59"
-]
+import os
+import time
+import requests
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from webdriver_manager.chrome import ChromeDriverManager
+from urllib.parse import urljoin
 
-# Write the units to a text file, each on a new line
-with open("unit_dropdown.txt", "w") as file:
-    for unit in units:
-        file.write(f"{unit}\n")
+# New base URL where the PDFs are stored
+base_url = "https://wildlife.dgf.nm.gov/wp-content/uploads/2014/06/"
+
+# Set up Selenium WebDriver (Make sure you have ChromeDriver or use WebDriver Manager)
+options = webdriver.ChromeOptions()
+options.headless = True  # Run in headless mode (no UI)
+driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+
+# Open the webpage using Selenium
+driver.get(base_url)
+
+# Wait for the page to load completely (adjust time if needed)
+time.sleep(3)
+
+# Find all <a> tags with href attributes (i.e., the links to PDFs)
+pdf_links = driver.find_elements(By.TAG_NAME, 'a')
+
+# Filter out only the links that end with .pdf
+pdf_urls = [urljoin(base_url, link.get_attribute('href')) for link in pdf_links if link.get_attribute('href') and link.get_attribute('href').endswith('.pdf')]
+
+# Create a directory to store the PDFs if it doesn't exist
+os.makedirs('downloaded_pdfs', exist_ok=True)
+
+# Loop through each PDF URL and download it
+for pdf_url in pdf_urls:
+    pdf_name = pdf_url.split('/')[-1]
+    pdf_path = os.path.join('downloaded_pdfs', pdf_name)
+    
+    # Download the PDF using requests
+    pdf_response = requests.get(pdf_url)
+    
+    if pdf_response.status_code == 200:
+        with open(pdf_path, 'wb') as file:
+            file.write(pdf_response.content)
+        print(f"Downloaded: {pdf_name}")
+    else:
+        print(f"Failed to download: {pdf_url}")
+
+# Close the Selenium driver
+driver.quit()
