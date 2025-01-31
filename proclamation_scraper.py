@@ -41,8 +41,7 @@ def parse_hunting_data(text, animal_choice):
     unit = None
 
     for line in lines:
-
-        if line.startswith("Unit\Description"):
+        if line.startswith("Unit"):
             unit = line.strip()
             continue
         elif line.startswith("Premium Statewide"):
@@ -97,3 +96,6 @@ def scrape_for_elk():
     scraped_text = scrape_pdf_page_range(pdf_path, elk_start_page, elk_end_page)
     return parse_hunting_data(scraped_text, animal_choice)
 
+# if __name__=="__main__":
+#     # scrape_for_deer()
+#     scrape_for_elk()
