@@ -182,6 +182,16 @@ class Bag(enum.Enum):
             bag_options.append({'label': '{}'.format(item), 'value': item})
         return bag_options
 
+    def get_unit_dropdown_from_bag(self, animal_choice):
+        with open('input//{}_unit_dropdown.txt'.format(animal_choice), 'r') as file:
+            units = file.readlines()
+    
+        # Strip any unwanted whitespace characters (like newlines)
+        units = [unit.strip() for unit in units]
+        
+        # Create the options for the dropdown menu
+        return [{'label': unit, 'value': unit} for unit in units]
+
     FAMD = "FAMD"
     FAWD = "FAWD"
     ESWTD = "ESWTD"
@@ -211,7 +221,11 @@ class GetListFromQuery():
         return [d for d in some_list if (d["3rd"] <= d["Licenses"])]
     
     def get_unit_by_number(some_list, unit_number):
-        return [d for d in some_list if (d["Unit"].__contains__("{}".format(unit_number[0])))]
+        for d in some_list:
+            if unit_number.find(d["Unit"]) != -1:
+                print(d["Unit"])
+                print(unit_number)
+        return [d for d in some_list if unit_number.find(d["Unit"]) != -1]
     
     def get_all_by_bag(some_list, bag):
         return [d for d in some_list if (d["Bag"].__contains__("{}".format(bag)))]
@@ -502,26 +516,15 @@ def create_filtering_table():
     return table
 
 def unit_dropdown():
-    # Read the units from a txt file
-    with open('input//unit_dropdown.txt', 'r') as file:
-        units = file.readlines()
-    
-    # Strip any unwanted whitespace characters (like newlines)
-    units = [unit.strip() for unit in units]
-    
-    # Create the options for the dropdown menu
-    unit_options = [{'label': unit, 'value': unit} for unit in units]
-    
-    # Return the layout for the dropdown
     return dbc.Row([
         dbc.Label('Unit Choices:', className="my-label"),
         dbc.Col(
             dcc.Dropdown(
                 id='unit_number',
                 className='dash-bootstrap',
-                options=unit_options,
-                value="",  # Set a default value
-                multi=True,
+                options={},
+                value="",
+                multi=False,
                 clearable=True,
                 style={'float': 'left', "width": "50%"}
             ),
@@ -701,6 +704,7 @@ def update_dashboard(dataframe1, dataframe2, selected_hunt_code,
 
 @app.callback(
     [Output('bag_choice', component_property='options'),
+     Output('unit_number', component_property='options'),
      Output('deer_button', component_property='n_clicks'),
      Output('elk_button',  component_property='n_clicks'),
      Output(component_id='animal_choice_deer', component_property='on'),
@@ -712,15 +716,15 @@ def update_dashboard(dataframe1, dataframe2, selected_hunt_code,
 )
 def ensure_only_one_on(animal_choice_deer, n_clicks_deer, animal_choice_elk, n_clicks_elk):
     if animal_choice_deer and not(n_clicks_deer) and n_clicks_elk:
-        return Bag.get_deer_bag_drop_down(Bag), 1,0, True, False #, 'deer_choice deer_btn_n:{}  elk_btn_n:{}'.format(n_clicks_deer, n_clicks_elk)
+        return Bag.get_deer_bag_drop_down(Bag), Bag.get_unit_dropdown_from_bag(Bag, 'deer'), 1,0, True, False
     elif animal_choice_elk and not(n_clicks_elk) and n_clicks_deer:
-        return Bag.get_elk_bag_drop_down(Bag), 0,1,False, True#, 'elk_choice deer_btn_n:{}  elk_btn_n:{}'.format(n_clicks_deer, n_clicks_elk)
+        return Bag.get_elk_bag_drop_down(Bag), Bag.get_unit_dropdown_from_bag(Bag, 'elk'), 0,1,False, True
     elif animal_choice_deer and not(n_clicks_deer) and not(n_clicks_elk):
-        return Bag.get_deer_bag_drop_down(Bag), 1,0, True, False#, 'deer_choice deer_btn_n:{}  elk_btn_n:{}'.format(n_clicks_deer, n_clicks_elk)
+        return Bag.get_deer_bag_drop_down(Bag), Bag.get_unit_dropdown_from_bag(Bag, 'deer'), 1,0, True, False
     elif animal_choice_elk and not(n_clicks_elk) and not(n_clicks_deer):
-        return Bag.get_elk_bag_drop_down(Bag), 0,1, False, True#, 'elk_choice deer_btn_n:{}  elk_btn_n:{}'.format(n_clicks_deer, n_clicks_elk)
+        return Bag.get_elk_bag_drop_down(Bag), Bag.get_unit_dropdown_from_bag(Bag, 'elk'), 0,1, False, True
     else:
-        return {},0,0,False,False#,""
+        return {},{},0,0,False,False#,""
 
 
 
