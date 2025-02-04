@@ -46,19 +46,12 @@ app.layout = [
     State('proclamation_results', 'data')  # Check if data is already in the store
 )
 def on_page_load(n, existing_data):
-    # Debugging log
-    print(f"on_page_load triggered, n_intervals: {n}, existing_data: {existing_data}")
 
     if n == 1:  # The first interval (immediately after the page loads)
         if not existing_data:  # If no data is present in store
-            # Scrape data
             deer_proclamation_df = scraper.scrape_for_deer()
             elk_proclamation_df = scraper.scrape_for_elk()
-            # proclamation_df = deer_proclamation_df.append(elk_proclamation_df, ignore_index=False, sort=False)
             return deer_proclamation_df.append(elk_proclamation_df, ignore_index=False, sort=False).to_dict("dict")
-            # print("Scraped data:", proclamation_df.to_dict("records"))
-            # return proclamation_df.to_dict("records")  # Return data to store
-        # If data exists, just return it (no scraping necessary)
         return existing_data
     return existing_data  # Return existing data if n_intervals isn't 1
 
@@ -241,7 +234,6 @@ def update_output_div(animal_choice_deer, animal_choice_elk,
         except TypeError as error:
             return "", {"": ""}
 
-    # print(query_result)
     return "", {index: value for index, value in enumerate(query_result)}
 
 
