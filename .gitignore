@@ -50,3 +50,10 @@ coverage.xml
 
 # Sphinx documentation
 docs/_build/
+__pycache__/bag.cpython-311.pyc
+__pycache__/bag.cpython-311.pyc
+__pycache__/choice.cpython-311.pyc
+__pycache__/query_odds.cpython-311.pyc
+__pycache__/residency.cpython-311.pyc
+__pycache__/success_percentages.cpython-311.pyc
+__pycache__/success_totals.cpython-311.pyc

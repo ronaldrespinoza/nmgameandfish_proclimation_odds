@@ -109,8 +109,8 @@ def filter_on_boolean_switches(filtered_list, residency_choice, choice_result, s
 def query_odds(odds_summary, unit_number, bag_choice, residency_choice, choice_result, success_total, success_percentage, add_private, add_youth,):
     filtered_list = []
     filtered_list = GetListFromQuery.get_unit_by_number(odds_summary, unit_number)
-    for bag in bag_choice:
-        filtered_list = GetListFromQuery.get_all_by_bag(filtered_list, bag)
+    # for bag in bag_choice:
+    #     filtered_list = GetListFromQuery.get_all_by_bag(filtered_list, bag)
     if not(add_private):
         filtered_list = GetListFromQuery.get_no_private(filtered_list)
     if not(add_youth):

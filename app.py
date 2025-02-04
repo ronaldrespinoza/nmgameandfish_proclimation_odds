@@ -1,5 +1,5 @@
 import proclamation_scraper as scraper
-from dash import Dash, dcc, html, Input, Output, callback, dash_table
+from dash import Dash, dcc, html, Input, Output, State, callback, dash_table
 from query_odds import *
 from residency import Residency
 from success_percentages import SuccessPercentages
@@ -12,6 +12,14 @@ app = Dash()
 
 # App layout
 app.layout = [
+    dcc.Interval(
+        id='interval-component', 
+        interval=5 * 1000,  # in milliseconds (1ms means it runs right after load)
+        n_intervals=0,  # Runs once when the page loads
+        disabled=False  # Makes sure the interval is active right after page load
+    ),
+    dcc.Store(id="proclamation_results", storage_type='local', data={}),
+    dcc.Store(id="query_results"),
     html.Tr([html.Td(html.Br())]),
     html.Tr([html.Td(html.Div(create_filtering_table()))]),
     html.Tr([html.Td(unit_dropdown())]),
@@ -28,9 +36,31 @@ app.layout = [
                     html.Td([html.Img(src=encoded_image, style={'width': '100%'})])
             ]),
     html.Div(id='output'),
-    dcc.Store(id="query_results"),
-    dcc.Store(id="proclamation_results")
 ]
+
+
+# Callback that runs once after the page loads
+@app.callback(
+    Output("proclamation_results", "data"),
+    Input('interval-component', 'n_intervals'),
+    State('proclamation_results', 'data')  # Check if data is already in the store
+)
+def on_page_load(n, existing_data):
+    # Debugging log
+    # print(f"on_page_load triggered, n_intervals: {n}, existing_data: {existing_data}")
+
+    if n == 1:  # The first interval (immediately after the page loads)
+        if not existing_data:  # If no data is present in store
+            # Scrape data
+            deer_proclamation_df = scraper.scrape_for_deer()
+            elk_proclamation_df = scraper.scrape_for_elk()
+            # proclamation_df = deer_proclamation_df.append(elk_proclamation_df, ignore_index=False, sort=False)
+            return deer_proclamation_df.append(elk_proclamation_df, ignore_index=False, sort=False).to_dict("dict")
+            # print("Scraped data:", proclamation_df.to_dict("records"))
+            # return proclamation_df.to_dict("records")  # Return data to store
+        # If data exists, just return it (no scraping necessary)
+        return existing_data
+    return existing_data  # Return existing data if n_intervals isn't 1
 
 
 @app.callback(
@@ -50,13 +80,11 @@ def generate_hunt_dropdown(query_values):
 
 # Callback to update merged data and pie charts based on selected unit
 @app.callback(
-    Output('pie-chart-container', 'children'),
-    Output('result_info_table', 'children'),
-    [Input('query_results', 'data'),
-     Input('proclamation_results', 'data'),
-     Input('hunt_dropdown', 'value'),
-    Input(component_id='add_private', component_property='on'),
-    Input(component_id='add_youth', component_property='on'),
+    [Output('pie-chart-container', 'children'),
+    Output('result_info_table', 'children'),],
+    Input('query_results', 'data'),
+    Input('proclamation_results', 'data'),
+    Input('hunt_dropdown', 'value'),
     Input(component_id='show_results_for_resident', component_property='on'),
     Input(component_id='show_results_for_nonresident', component_property='on'),
     Input(component_id='show_results_for_outfitter', component_property='on'),
@@ -71,10 +99,8 @@ def generate_hunt_dropdown(query_values):
     Input(component_id='show_resident_successfull_draw_percentage', component_property='on'),
     Input(component_id='show_nonresident_successfull_draw_percentage', component_property='on'),
     Input(component_id='show_outfitter_successfull_draw_percentage', component_property='on'),
-     ]
 )
 def update_dashboard(dataframe1, dataframe2, selected_hunt_code,
-                      add_private, add_youth,
                       show_results_for_resident, show_results_for_nonresident, show_results_for_outfitter,
                       show_results_for_1stchoice, show_results_for_2ndchoice, show_results_for_3rdchoice, show_results_for_4thchoice, show_results_for_totals,
                       show_resident_successfull_draw_total, show_nonresident_successfull_draw_total, show_outfitter_successfull_draw_total,
@@ -87,51 +113,50 @@ def update_dashboard(dataframe1, dataframe2, selected_hunt_code,
         df2 = pd.DataFrame(dataframe2)
         try:
             filtered_df = pd.merge(df1, df2, on=['Hunt Code', 'Licenses', 'Bag'], how='inner')
+
+            # Calculate the percentage values before generating pie charts
+            filtered_df = get_df_for_pie_chart(filtered_df, 'resident_percent_success', 'Resident_successfull_draw_total', 'Total_resident')
+            filtered_df = get_df_for_pie_chart(filtered_df, 'resident_1stDraw_percent_success', 'resident_1st_success', '1st_resident')
+            filtered_df = get_df_for_pie_chart(filtered_df, 'resident_2ndDraw_percent_success', 'resident_2nd_success', '2nd_resident')
+            filtered_df = get_df_for_pie_chart(filtered_df, 'resident_3rdDraw_percent_success', 'resident_3rd_success', '3rd_resident')
+
+            if selected_hunt_code is not None and selected_hunt_code != "":
+                filtered_df = filtered_df[filtered_df['Hunt Code'] == selected_hunt_code]
+            # Create a list to store pie chart components (dcc.Graph)
+            pie_chart_components = []
+
+            # Loop through each unique Hunt Code to generate pie charts for each row
+            for hunt_code in filtered_df['Hunt Code'].unique():
+                # Filter rows with the current Hunt Code
+                hunt_code_df = filtered_df[filtered_df['Hunt Code'] == hunt_code]
+
+                # Create a row for the pie charts for each of the percentage columns
+                pie_charts_for_this_hunt_code = []
+                
+                for _, row in hunt_code_df.iterrows():
+                    pie_charts_for_this_hunt_code.append(dcc.Graph(figure=create_pie_chart(row, 'resident_percent_success', 'Overall Success')))
+                    pie_charts_for_this_hunt_code.append(dcc.Graph(figure=create_pie_chart(row, 'resident_1stDraw_percent_success', '1st Draw Success')))
+                    pie_charts_for_this_hunt_code.append(dcc.Graph(figure=create_pie_chart(row, 'resident_2ndDraw_percent_success', '2nd Draw Success')))
+                    pie_charts_for_this_hunt_code.append(dcc.Graph(figure=create_pie_chart(row, 'resident_3rdDraw_percent_success', '3rd Draw Success')))
+                
+                # Add pie charts for the current hunt code to the list
+                pie_chart_components.append(html.Div(
+                    children=pie_charts_for_this_hunt_code,
+                    style={'display': 'flex', 'justify-content': 'space-evenly', 'margin-bottom': '20px'}
+                ))    
+            
+            residency_choice = Residency(show_results_for_resident, show_results_for_nonresident, show_results_for_outfitter)
+            choice_result = Choice(show_results_for_1stchoice, show_results_for_2ndchoice, show_results_for_3rdchoice, show_results_for_4thchoice, show_results_for_totals)
+            success_total = SuccessTotals(show_resident_successfull_draw_total, show_nonresident_successfull_draw_total, show_outfitter_successfull_draw_total)
+            success_percentage = SuccessPercentages(show_resident_successfull_draw_percentage, show_nonresident_successfull_draw_percentage, show_outfitter_successfull_draw_percentage)
+            hunt_code_df = filter_on_boolean_switches(filtered_df, residency_choice, choice_result, success_total, success_percentage)
+            hunt_code_df = drop_success(hunt_code_df)
+
+            return pie_chart_components, dash_table.DataTable(data=hunt_code_df.to_dict('records'), page_size=10)
         except KeyError:
-            pass
+            return [None, None]
     else:
-        return [''], None
-
-    # Calculate the percentage values before generating pie charts
-    filtered_df = get_df_for_pie_chart(filtered_df, 'resident_percent_success', 'Resident_successfull_draw_total', 'Total_resident')
-    filtered_df = get_df_for_pie_chart(filtered_df, 'resident_1stDraw_percent_success', 'resident_1st_success', '1st_resident')
-    filtered_df = get_df_for_pie_chart(filtered_df, 'resident_2ndDraw_percent_success', 'resident_2nd_success', '2nd_resident')
-    filtered_df = get_df_for_pie_chart(filtered_df, 'resident_3rdDraw_percent_success', 'resident_3rd_success', '3rd_resident')
-
-    if selected_hunt_code is not None and selected_hunt_code != "":
-        filtered_df = filtered_df[filtered_df['Hunt Code'] == selected_hunt_code]
-    # Create a list to store pie chart components (dcc.Graph)
-    pie_chart_components = []
-
-    # Loop through each unique Hunt Code to generate pie charts for each row
-    for hunt_code in filtered_df['Hunt Code'].unique():
-        # Filter rows with the current Hunt Code
-        hunt_code_df = filtered_df[filtered_df['Hunt Code'] == hunt_code]
-
-        # Create a row for the pie charts for each of the percentage columns
-        pie_charts_for_this_hunt_code = []
-        
-        for _, row in hunt_code_df.iterrows():
-            pie_charts_for_this_hunt_code.append(dcc.Graph(figure=create_pie_chart(row, 'resident_percent_success', 'Overall Success')))
-            pie_charts_for_this_hunt_code.append(dcc.Graph(figure=create_pie_chart(row, 'resident_1stDraw_percent_success', '1st Draw Success')))
-            pie_charts_for_this_hunt_code.append(dcc.Graph(figure=create_pie_chart(row, 'resident_2ndDraw_percent_success', '2nd Draw Success')))
-            pie_charts_for_this_hunt_code.append(dcc.Graph(figure=create_pie_chart(row, 'resident_3rdDraw_percent_success', '3rd Draw Success')))
-        
-        # Add pie charts for the current hunt code to the list
-        pie_chart_components.append(html.Div(
-            children=pie_charts_for_this_hunt_code,
-            style={'display': 'flex', 'justify-content': 'space-evenly', 'margin-bottom': '20px'}
-        ))    
-    
-    residency_choice = Residency(show_results_for_resident, show_results_for_nonresident, show_results_for_outfitter)
-    choice_result = Choice(show_results_for_1stchoice, show_results_for_2ndchoice, show_results_for_3rdchoice, show_results_for_4thchoice, show_results_for_totals)
-    success_total = SuccessTotals(show_resident_successfull_draw_total, show_nonresident_successfull_draw_total, show_outfitter_successfull_draw_total)
-    success_percentage = SuccessPercentages(show_resident_successfull_draw_percentage, show_nonresident_successfull_draw_percentage, show_outfitter_successfull_draw_percentage)
-    hunt_code_df = filter_on_boolean_switches(filtered_df, residency_choice, choice_result, success_total, success_percentage)
-    hunt_code_df = drop_success(hunt_code_df)
-
-    return pie_chart_components, dash_table.DataTable(data=hunt_code_df.to_dict('records'), page_size=10)
-
+        return [None, None]
 
 @app.callback(
     [Output('bag_choice', component_property='options'),
@@ -155,7 +180,7 @@ def ensure_only_one_on(animal_choice_deer, n_clicks_deer, animal_choice_elk, n_c
     elif animal_choice_elk and not(n_clicks_elk) and not(n_clicks_deer):
         return Bag.get_elk_bag_drop_down(Bag), Bag.get_unit_dropdown_from_bag(Bag, 'elk'), 0,1, False, True
     else:
-        return {},{},0,0,False,False#,""
+        return {},{},0,0,False,False
 
 
 
@@ -163,7 +188,6 @@ def ensure_only_one_on(animal_choice_deer, n_clicks_deer, animal_choice_elk, n_c
 @callback(
     Output('output', 'children'),
     Output("query_results", "data"),
-    Output("proclamation_results", "data"),
     Input(component_id='animal_choice_deer', component_property='on'),
     Input(component_id='animal_choice_elk', component_property='on'),
     Input(component_id='add_private', component_property='on'),
@@ -206,25 +230,19 @@ def update_output_div(animal_choice_deer, animal_choice_elk,
     elif animal_choice_elk:
         csv_filename = '2024OddsSummary_Elk.csv'
     elif csv_filename == "":
-        return "", {"": ""}, {"": ""}
+        return "", {"": ""}
 
     odds_summary = parser_func("input/{}".format(csv_filename))
     if unit_number is None:
-        return "you must choose a unit number", {"": ""}, {"": ""}
-    elif bag_choice is None:
-        return "you must choose a bag", {"": ""}, {"": ""}
+        return "you must choose a unit number", {"": ""}
     else:
         try:
             query_result = query_odds(odds_summary, unit_number, bag_choice, residency_choice, choice_result, success_total, success_percentage, add_private, add_youth,)
-            if animal_choice_deer:
-                proclamation_df = scraper.scrape_for_deer()
-            elif animal_choice_elk:
-                proclamation_df = scraper.scrape_for_elk()
         except TypeError as error:
-            return query_result, {"": ""}, {"": ""}
+            return "", {"": ""}
 
-    return "", {index: value for index, value in enumerate(query_result)}, proclamation_df.to_dict("records")
-
+    # print(query_result)
+    return "", {index: value for index, value in enumerate(query_result)}
 
 
 # Run the app
