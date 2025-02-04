@@ -47,7 +47,7 @@ app.layout = [
 )
 def on_page_load(n, existing_data):
     # Debugging log
-    # print(f"on_page_load triggered, n_intervals: {n}, existing_data: {existing_data}")
+    print(f"on_page_load triggered, n_intervals: {n}, existing_data: {existing_data}")
 
     if n == 1:  # The first interval (immediately after the page loads)
         if not existing_data:  # If no data is present in store
