@@ -7,30 +7,30 @@ import plotly.express as px
 import base64
 
 
-class GetListFromQuery():
-    def get_no_private(some_list):
-        return [d for d in some_list if not(d["Unit"].__contains__("private land only"))]
-    
-    def get_no_youth(some_list):
-        return [d for d in some_list if not(d["Unit"].__contains__("youth only"))]
-    
-    def get_TotalAppliedLicenses_LessThan_ActualLicenses(some_list):
-        return [d for d in some_list if (d["T"] <= d["Licenses"])]
-    
-    def get_1stAppliedLicenses_LessThan_ActualLicenses(some_list):
-        return [d for d in some_list if (d["1st"] <= d["Licenses"])]
-    
-    def get_2ndAppliedLicenses_LessThan_ActualLicenses(some_list):
-        return [d for d in some_list if (d["2nd"] <= d["Licenses"])]
-    
-    def get_3rdAppliedLicenses_LessThan_ActualLicenses(some_list):
-        return [d for d in some_list if (d["3rd"] <= d["Licenses"])]
-    
-    def get_unit_by_number(some_list, unit_number):
-        return [d for d in some_list if unit_number.find(d["Unit"]) != -1]
-    
-    def get_all_by_bag(some_list, bag):
-        return [d for d in some_list if (d["Bag"].__contains__("{}".format(bag)))]
+
+def get_no_private(some_list):
+    return [d for d in some_list if not(d["Unit"].__contains__("private land only"))]
+
+def get_no_youth(some_list):
+    return [d for d in some_list if not(d["Unit"].__contains__("youth only"))]
+
+def get_TotalAppliedLicenses_LessThan_ActualLicenses(some_list):
+    return [d for d in some_list if (d["T"] <= d["Licenses"])]
+
+def get_1stAppliedLicenses_LessThan_ActualLicenses(some_list):
+    return [d for d in some_list if (d["1st"] <= d["Licenses"])]
+
+def get_2ndAppliedLicenses_LessThan_ActualLicenses(some_list):
+    return [d for d in some_list if (d["2nd"] <= d["Licenses"])]
+
+def get_3rdAppliedLicenses_LessThan_ActualLicenses(some_list):
+    return [d for d in some_list if (d["3rd"] <= d["Licenses"])]
+
+def get_unit_by_number(some_list, unit_number):
+    return [d for d in some_list if unit_number.find(d["Unit"]) != -1]
+
+def get_all_by_bag(some_list, bag):
+    return [d for d in some_list if (d["Bag"].__contains__("{}".format(bag)))]
 
 def drop_success(result_set):
     try:
@@ -106,15 +106,18 @@ def filter_on_boolean_switches(filtered_list, residency_choice, choice_result, s
     
     return df.to_dict('records')
 
-def query_odds(odds_summary, unit_number, bag_choice, residency_choice, choice_result, success_total, success_percentage, add_private, add_youth,):
+def get_filtered_list(odds_summary, unit_number, bag_choice, residency_choice, choice_result, success_total, success_percentage, add_private, add_youth,):
     filtered_list = []
-    filtered_list = GetListFromQuery.get_unit_by_number(odds_summary, unit_number)
+    # for item in odds_summary:
+    #     print(item['Hunt Code'])
+
+    filtered_list = get_unit_by_number(odds_summary, unit_number)
     # for bag in bag_choice:
     #     filtered_list = GetListFromQuery.get_all_by_bag(filtered_list, bag)
     if not(add_private):
-        filtered_list = GetListFromQuery.get_no_private(filtered_list)
+        filtered_list = get_no_private(filtered_list)
     if not(add_youth):
-        filtered_list = GetListFromQuery.get_no_youth(filtered_list)
+        filtered_list = get_no_youth(filtered_list)
     filtered_list = filter_on_boolean_switches(filtered_list, residency_choice, choice_result, success_total, success_percentage)
     return filtered_list
 
@@ -165,14 +168,21 @@ def new_odds_summary_dict():
     return odds_summary_dict
 
 def parser_func(csv_filename):
+    """
+    Parse a CSV file and return the data as a list of dictionaries.
+    """
+    print(f"Parsing CSV file: {csv_filename}")
+    
+    odds_summary = []
+    
     with open(csv_filename, "r") as csv_reader:
         datareader = csv.reader(csv_reader)
-        odds_summary = []
         for row in datareader:
-            if row[0].__contains__("Hunt Code"):
+            if row[0].__contains__("Hunt Code"):  # Skip header or irrelevant rows
                 next(csv_reader)
             else:
                 odds_summary_dict = new_odds_summary_dict()
+                
                 for idx, key in enumerate(odds_summary_dict):
                     if idx < 3:
                         odds_summary_dict[key] = row[idx]
@@ -180,8 +190,34 @@ def parser_func(csv_filename):
                         odds_summary_dict[key] = float(row[idx])
                     else:
                         odds_summary_dict[key] = int(row[idx])
+                
+                # Debug: Log the first few rows of the data
+                # print(f"Processed row: {odds_summary_dict.get('Hunt Code', 'No Hunt Code')}")
                 odds_summary.append(odds_summary_dict)
+
+    # print(f"Finished parsing {csv_filename}, rows processed: {len(odds_summary)}")
     return odds_summary
+
+
+
+# def parser_func(csv_filename):
+#     with open(csv_filename, "r") as csv_reader:
+#         datareader = csv.reader(csv_reader)
+#         odds_summary = []
+#         for row in datareader:
+#             if row[0].__contains__("Hunt Code"):
+#                 next(csv_reader)
+#             else:
+#                 odds_summary_dict = new_odds_summary_dict()
+#                 for idx, key in enumerate(odds_summary_dict):
+#                     if idx < 3:
+#                         odds_summary_dict[key] = row[idx]
+#                     elif 23 <= idx <= 27:
+#                         odds_summary_dict[key] = float(row[idx])
+#                     else:
+#                         odds_summary_dict[key] = int(row[idx])
+#                 odds_summary.append(odds_summary_dict)
+#     return odds_summary
 
 def encode_image(image_path):
     with open(image_path, "rb") as img_file:
@@ -376,6 +412,8 @@ def create_pie_chart(row, column, label):
     return fig
 
 def get_df_for_pie_chart(df, new_column, total_column, factored_column):
+    # # print(f"get_df_for_pie_chart1  newcolumn:{new_column}, total_column: {total_column} factored_column: {factored_column} df:  \n{df}")
     df[new_column] = df[total_column] / df[factored_column] * 100
+    # print("get_df_for_pie_chart2")
     return df
 
