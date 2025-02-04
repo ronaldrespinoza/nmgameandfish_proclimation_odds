@@ -1,0 +1,176 @@
+Unit 2A
+Unit 2A: private land only
+Unit 2A: youth only
+Unit 2B
+Unit 2B: youth only
+Unit 2B: private land only
+Unit 2C
+Unit 2C: private land only
+Unit 4: Humphries/Rio Chama/Sargent WMAs only
+Unit 4: Humphries/Rio Chama/Sargent WMAs only, youth only
+Unit 4: private land only
+Unit 5A: public land only
+Unit 5A: private land only
+Unit 5B
+Unit 5B: youth only
+Units 6A and 6C: mobility impaired only
+Units 6A and 6C
+Unit 7
+Unit 8: youth only
+Unit 8
+Unit 9, including Water Canyon WMA
+Unit 9: Marquez/LBar WMAs only
+Unit 9, including Water Canyon WMA: youth only
+Unit 9, including Water Canyon WMA: restricted muzzleloader only
+Unit 10: mobility impaired only
+Unit 10
+Unit 10: youth only
+Unit 12
+Unit 13
+Unit 13: youth only
+Unit 14
+Unit 15
+Unit 15: youth only
+Unit 16
+Unit 16: mobility impaired only
+Unit 16: youth only
+Unit 17
+Unit 17: youth only
+Unit 18
+Unit 19: White Sands missile range only
+Unit 20
+Unit 21
+Unit 21: youth only
+Unit 22
+Unit 22: youth only
+Unit 23: except Burro mountains hunt area
+Unit 23: Burro mountains hunt area only
+Unit 23: Burro mountains hunt area only, youth only
+Unit 24: including Fort Bayard
+Unit 24: excluding Fort Bayard
+Unit 24: excluding Fort Bayard management area
+Unit 24: including Fort Bayard, youth only
+Unit 25
+Unit 26
+Unit 27
+Unit 27: youth only
+Unit 28: McGregor range only
+Unit 28: McGregor range only, military only
+Unit 29
+Unit 30
+Unit 30: youth only
+Unit 31
+Unit 32
+Unit 32: Roswell and Ft. Sumner hunt areas only
+Unit 32: Roswell and Ft. Sumner hunt areas only, youth only
+Unit 33
+Unit 33: Huey WMA only, youth only
+Unit 33: restricted muzzleloader only
+Unit 33: Huey WMA only, youth only
+Unit 34: mobility impaired only
+Unit 34: youth only
+Unit 36
+Unit 36: youth only
+Unit 37
+Unit 38
+Unit 39
+Unit 40
+Unit 41
+Unit 41: youth only
+Unit 42
+Unit 43
+Unit 45
+Unit 45: mobility impaired only
+Unit 45: youth only
+Unit 47
+Unit 48
+Unit 49
+Unit 50
+Unit 51A
+Unit 51B
+Unit 52
+Unit 52: mobility impaired only
+Unit 52 youth only
+Unit 52: restricted muzzleloader only
+Unit 53
+Unit 53: excluding Cerro portion
+Units 54/55: Colin Neblett WMA only
+Unit 55: ES Barker WMA only
+Unit 55: ES Barker WMA only, youth only
+Unit 55: Urraca WMA only
+Unit 55A: ES Barker WMA only
+Unit 55A: Urraca WMA only
+Unit 55A: Valle Vidal only
+Unit 55A: Valle Vidal only, youth only
+Unit 56
+Unit 56: youth only
+Unit 57 (excluding Sugarite Canyon State Park)
+Unit 57 (excluding Sugarite Canyon State Park): youth only
+Unit 57: Sugarite canyon state park only
+Unit 58
+Unit 58: youth only
+Unit 59
+Unit 59: youth only
+statewide
+
+
+statewide
+Unit 1
+Unit 2
+Unit 3
+Unit 4
+Unit 5
+Unit 6
+Unit 7
+Unit 8
+Unit 9
+Unit 10
+Unit 11
+Unit 12
+Unit 13
+Unit 14
+Unit 15
+Unit 16
+Unit 17
+Unit 18
+Unit 19
+Unit 20
+Unit 21
+Unit 22
+Unit 23
+Unit 24
+Unit 25
+Unit 26
+Unit 27
+Unit 28
+Unit 29
+Unit 30
+Unit 31
+Unit 32
+Unit 33
+Unit 34
+Unit 35
+Unit 36
+Unit 37
+Unit 38
+Unit 39
+Unit 40
+Unit 41
+Unit 42
+Unit 43
+Unit 44
+Unit 45
+Unit 46
+Unit 47
+Unit 48
+Unit 49
+Unit 50
+Unit 51
+Unit 52
+Unit 53
+Unit 54
+Unit 55
+Unit 56
+Unit 57
+Unit 58
+Unit 59

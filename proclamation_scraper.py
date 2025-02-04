@@ -41,33 +41,32 @@ def parse_hunting_data(text, animal_choice):
     unit = None
 
     for line in lines:
-
         if line.startswith("Unit"):
             unit = line.strip()
             continue
         elif line.startswith("Premium Statewide"):
-            unit = line.strip()
+            unit = "statewide"
             continue
 
         if animal_choice == "elk":
             pattern = get_elk_regex()
         elif animal_choice == "deer":
             pattern = get_deer_regex()
-        print(line)
+
         match = pattern.match(line)
         if match:
             hunt_type = match.group(1).strip()
             hunt_dates = match.group(2).strip()
             hunt_code = match.group(3).strip()
             fee_type = match.group(4).strip()
-            licenses = match.group(5).strip()
+            licenses = int(match.group(5).strip())
             bag_limit = match.group(6).strip()
 
             data.append([unit, hunt_type, hunt_dates, hunt_code, fee_type, licenses, bag_limit])
         else:
             continue
         
-    return pd.DataFrame(data, columns=["Unit", "Hunt Type", "Hunt Dates", "Hunt Code", "Fee Type", "Licenses", "Bag Limit"])
+    return pd.DataFrame(data, columns=["Unit/Description", "Hunt Type", "Hunt Dates", "Hunt Code", "Fee Type", "Licenses", "Bag"])
 
 def scrape_pdf_page_range(pdf_path, start_page, end_page):
     full_text = ""
@@ -81,24 +80,22 @@ def scrape_pdf_page_range(pdf_path, start_page, end_page):
 
     return full_text
 
-def main():
-    # test_get_elk_regex()
-    pdf_path = "HNT RIB 2025-26_ENGLISH_Online.pdf"
-    # pdf_path = "HNT-RIB-2023-24-FINAL_ENGLISH_Online.pdf"
+def scrape_for_deer():
+    pdf_path = "input/HNT RIB 2025-26_ENGLISH_Online.pdf"
+    animal_choice = 'deer'
+    deer_start_page = 55
+    deer_end_page = 68
+    scraped_text = scrape_pdf_page_range(pdf_path, deer_start_page, deer_end_page)
+    return parse_hunting_data(scraped_text, animal_choice)
 
-    # animal_choice = 'deer'
-    # deer_start_page = 55
-    # deer_end_page = 68
-    # scraped_text = scrape_pdf_page_range(pdf_path, deer_start_page, deer_end_page)
-
+def scrape_for_elk():
+    pdf_path = "input/HNT RIB 2025-26_ENGLISH_Online.pdf"
     animal_choice = 'elk'
     elk_start_page = 75
     elk_end_page = 95
-
     scraped_text = scrape_pdf_page_range(pdf_path, elk_start_page, elk_end_page)
+    return parse_hunting_data(scraped_text, animal_choice)
 
-    df = parse_hunting_data(scraped_text, animal_choice)
-    print(df)
-
-if __name__ == "__main__":
-    main()
+# if __name__=="__main__":
+#     # scrape_for_deer()
+#     scrape_for_elk()

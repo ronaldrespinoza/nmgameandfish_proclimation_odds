@@ -1,201 +1,18 @@
 import csv
-import sys
-import enum
-import time
-# Import packages
-from dash import Dash, dcc, html, Input, Output, callback, dash_table
+from dash import dcc, html
 import dash_bootstrap_components as dbc
 import dash_daq as daq
 import pandas as pd
 import plotly.express as px
 import base64
-import plotly.graph_objects as go
-
-
-class Choice():
-    def __init__(self, first_choice, second_choice, third_choice, fourth_choice, total_chosen):
-        self._first_choice = first_choice
-        self._second_choice = second_choice
-        self._third_choice = third_choice
-        self._fourth_choice = fourth_choice
-        self._total_chosen = total_chosen
-
-    @property
-    def first_choice(self):
-        return self._first_choice
-
-    @first_choice.setter
-    def first_choice(self, value):
-        self._first_choice = value
-    
-    @property
-    def second_choice(self):
-        return self._second_choice
-
-    @second_choice.setter
-    def second_choice(self, value):
-        self._second_choice = value
-    
-    @property
-    def third_choice(self):
-        return self._third_choice
-
-    @third_choice.setter
-    def third_choice(self, value):
-        self._third_choice = value
-    
-    @property
-    def fourth_choice(self):
-        return self._fourth_choice
-
-    @fourth_choice.setter
-    def fourth_choice(self, value):
-        self._fourth_choice = value
-    
-    @property
-    def total_chosen(self):
-        return self._total_chosen
-
-    @total_chosen.setter
-    def total_chosen(self, value):
-        self._total_chosen = value
-
-
-class SuccessTotals():
-    def __init__(self, resident_total, non_resident_total, outfitter_total):
-        self._resident_total = resident_total
-        self._non_resident_total = non_resident_total
-        self._outfitter_total = outfitter_total
-
-    @property
-    def resident_total(self):
-        return self._resident_total
-
-    @resident_total.setter
-    def resident_total(self, value):
-        self._resident_total = value
-    
-    @property
-    def non_resident_total(self):
-        return self._non_resident_total
-
-    @non_resident_total.setter
-    def non_resident_total(self, value):
-        self._non_resident_total = value
-    
-    @property
-    def outfitter_total(self):
-        return self._outfitter_total
-
-    @outfitter_total.setter
-    def outfitter_total(self, value):
-        self._outfitter_total = value
-
-
-class SuccessPercentages():
-    def __init__(self, resident_percentages, non_resident_percentages, outfitter_percentages):
-        self._resident_percentages = resident_percentages
-        self._non_resident_percentages = non_resident_percentages
-        self._outfitter_percentages = outfitter_percentages
-
-    @property
-    def resident_percentages(self):
-        return self._resident_percentages
-
-    @resident_percentages.setter
-    def resident_percentages(self, value):
-        self._resident_percentages = value
-    
-    @property
-    def non_resident_percentages(self):
-        return self._non_resident_percentages
-
-    @non_resident_percentages.setter
-    def non_resident_percentages(self, value):
-        self._non_resident_percentages = value
-    
-    @property
-    def outfitter_percentages(self):
-        return self._outfitter_percentages
-
-    @outfitter_percentages.setter
-    def outfitter_percentages(self, value):
-        self._outfitter_percentages = value
-
-
-class Residency():
-    def __init__(self, resident, non_resident, outfitter):
-        self._resident = resident
-        self._non_resident = non_resident
-        self._outfitter = outfitter
-
-    @property
-    def resident(self):
-        return self._resident
-
-    @resident.setter
-    def resident(self, value):
-        self._resident = value
-    
-    @property
-    def non_resident(self):
-        return self._non_resident
-
-    @non_resident.setter
-    def non_resident(self, value):
-        self._non_resident = value
-    
-    @property
-    def outfitter(self):
-        return self._outfitter
-
-    @outfitter.setter
-    def outfitter(self, value):
-        self._outfitter = value
-
-
-
-
-class Bag(enum.Enum):
-    def __str__(self) -> str:
-        return self.value
-    
-    def __repr__(self) -> str:
-        return f"\'{self.value}\'"
-    
-    def get_deer_bags():
-        return ['A', 'ES', 'ESWTD', 'FAD', 'FAMD', 'FAWTD']
-    
-    def get_deer_bag_drop_down(self):
-        bag_options = []
-        for item in self.get_deer_bags():
-            bag_options.append({'label': '{}'.format(item), 'value': item})
-        return bag_options
-
-    def get_elk_bags():
-        return ['A', 'APRE/6', 'APRE/6/A', 'ES', 'MB', 'MB/A']
-    
-    def get_elk_bag_drop_down(self):
-        bag_options = []
-        for item in self.get_elk_bags():
-            bag_options.append({'label': '{}'.format(item), 'value': item})
-        return bag_options
-
-    FAMD = "FAMD"
-    FAWD = "FAWD"
-    ESWTD = "ESWTD"
-    FAD = "FAD"
-    A = "A"
-    ES = "ES"
-    MB = "MB"
 
 
 class GetListFromQuery():
     def get_no_private(some_list):
-        return [d for d in some_list if not(d["Unit/Description"].__contains__("private land only"))]
+        return [d for d in some_list if not(d["Unit"].__contains__("private land only"))]
     
     def get_no_youth(some_list):
-        return [d for d in some_list if not(d["Unit/Description"].__contains__("youth only"))]
+        return [d for d in some_list if not(d["Unit"].__contains__("youth only"))]
     
     def get_TotalAppliedLicenses_LessThan_ActualLicenses(some_list):
         return [d for d in some_list if (d["T"] <= d["Licenses"])]
@@ -210,12 +27,38 @@ class GetListFromQuery():
         return [d for d in some_list if (d["3rd"] <= d["Licenses"])]
     
     def get_unit_by_number(some_list, unit_number):
-        return [d for d in some_list if (d["Unit/Description"].__contains__("{}".format(unit_number)))]
+        return [d for d in some_list if unit_number.find(d["Unit"]) != -1]
     
     def get_all_by_bag(some_list, bag):
         return [d for d in some_list if (d["Bag"].__contains__("{}".format(bag)))]
-    
-    
+
+def drop_success(result_set):
+    try:
+        df_display = pd.DataFrame(result_set)
+        df_display = df_display.drop(columns=["resident_1st_success"])
+        df_display = df_display.drop(columns=["nonresident_1st_success"])
+        df_display = df_display.drop(columns=["outfitter_1st_success"])
+        df_display = df_display.drop(columns=["resident_2nd_success"])
+        df_display = df_display.drop(columns=["nonresident_2nd_success"])
+        df_display = df_display.drop(columns=["outfitter_2nd_success"])
+        df_display = df_display.drop(columns=["resident_3rd_success"])
+        df_display = df_display.drop(columns=["nonresident_3rd_success"])
+        df_display = df_display.drop(columns=["outfitter_3rd_success"])
+        df_display = df_display.drop(columns=["resident_4th_success"])
+        df_display = df_display.drop(columns=["nonresident_4th_success"])
+        df_display = df_display.drop(columns=["outfitter_4th_success"])
+        df_display = df_display.drop(columns=["resident_total_success"])
+        df_display = df_display.drop(columns=["nonresident_total_success"])
+        df_display = df_display.drop(columns=["outfitter_total_success"])
+        df_display = df_display.drop(columns=["resident_percent_success"])
+        df_display = df_display.drop(columns=["resident_1stDraw_percent_success"])
+        df_display = df_display.drop(columns=["resident_2ndDraw_percent_success"])
+        df_display = df_display.drop(columns=["resident_3rdDraw_percent_success"])
+    except KeyError:
+        pass
+    return df_display
+
+
 def filter_on_boolean_switches(filtered_list, residency_choice, choice_result, success_total, success_percentage):
     df = pd.DataFrame(filtered_list)
     
@@ -260,26 +103,24 @@ def filter_on_boolean_switches(filtered_list, residency_choice, choice_result, s
             df = df.drop(columns=["outfitter_percentage_allocation"])
     except KeyError:
         pass
-
+    
     return df.to_dict('records')
 
 def query_odds(odds_summary, unit_number, bag_choice, residency_choice, choice_result, success_total, success_percentage, add_private, add_youth,):
     filtered_list = []
-    for unit_num in unit_number:
-        filtered_list = GetListFromQuery.get_unit_by_number(odds_summary, unit_num)
+    filtered_list = GetListFromQuery.get_unit_by_number(odds_summary, unit_number)
     for bag in bag_choice:
         filtered_list = GetListFromQuery.get_all_by_bag(filtered_list, bag)
     if not(add_private):
         filtered_list = GetListFromQuery.get_no_private(filtered_list)
     if not(add_youth):
         filtered_list = GetListFromQuery.get_no_youth(filtered_list)
-
     filtered_list = filter_on_boolean_switches(filtered_list, residency_choice, choice_result, success_total, success_percentage)
     return filtered_list
 
 def new_odds_summary_dict():
     odds_summary_dict = {"Hunt Code": "",
-                        "Unit/Description": "",
+                        "Unit": "",
                         "Bag": "",
                         "Licenses": "",
                         "1st_choice_total_submissions": "",
@@ -347,7 +188,7 @@ def encode_image(image_path):
         encoded_string = base64.b64encode(img_file.read()).decode('utf-8')
     return f"data:image/jpeg;base64,{encoded_string}"
 
-encoded_image = encode_image("C://Users//admin//Documents//NMGF_Hunting//Map-New-Mexico-State-Game-Management-Unit-Boundaries.jpg")
+encoded_image = encode_image("C://Users//admin//Documents//NMGF_Hunting//input//Map-New-Mexico-State-Game-Management-Unit-Boundaries.jpg")
 
 def create_filtering_table():
     row1 = html.Tr([html.Td("Deer"),
@@ -477,30 +318,23 @@ def create_filtering_table():
     return table
 
 def unit_dropdown():
-    unit_options = []
-    idx = 1
+    return dbc.Row([
+        dbc.Label('Unit Choices:', className="my-label"),
+        dbc.Col(
+            dcc.Dropdown(
+                id='unit_number',
+                className='dash-bootstrap',
+                options={},
+                value="",
+                multi=False,
+                clearable=True,
+                style={'float': 'left', "width": "50%"}
+            ),
+        ),
+    ], className="mt-2")
 
-    while idx < 60:
-        unit_options.append({'label': '{}'.format(idx), 'value': idx})
-        idx += 1
-    unit_options.append({'label': 'statewide', 'value': 'statewide'})
-    return  dbc.Row([
-                dbc.Label('Unit Choices:', className="my-label"),
-                dbc.Col(
-                    dcc.Dropdown(
-                        id='unit_number',
-                        className='dash-bootstrap',
-                        options=unit_options,
-                        value="lag_0",
-                        multi=True,
-                        clearable=True,
-                        style={'float': 'left',"width":"200px"}
-                    ),
-                ),
-            ], className="mt-2",)
 
 def bag_dropdown():
-
     return  dbc.Row([
                 dbc.Label('Bag Choices:', className="my-label"),
                 dbc.Col(
@@ -518,12 +352,11 @@ def bag_dropdown():
 
 
 def hunt_code_dropdown():
-
     return  dbc.Row([
                 dbc.Label('Resident Success Pie Chart by hunt code:', className="my-label"),
                 dbc.Col(
                     dcc.Dropdown(
-                        id='hunt-dropdown',
+                        id='hunt_dropdown',
                         options=[],
                         value="",
                         multi=False,
@@ -532,219 +365,17 @@ def hunt_code_dropdown():
                 ),
             ], className="mt-2",)
 
-# Generate a pie chart for each hunt code
-def create_pie_chart(row, percent_success, draw_choice):
-    return px.pie(
-        names=['Resident {} Success'.format(draw_choice), 'Resident Failure'],
-        values=[row[percent_success], 100 - row['resident_percent_success']],
-        title=f"{row['Hunt Code']} - Resident {draw_choice} Success",
+# Function to create pie charts
+def create_pie_chart(row, column, label):
+    fig = px.pie(
+        names=["Success", "Failure"],
+        values=[row[column], 100 - row[column]],
+        title=f"{label} - {row['Hunt Code']} <br> {row['Hunt Dates']} - {row['Hunt Type']}",
         hole=0.3
     )
-
-
-# Initialize the app
-app = Dash()
-
-# App layout
-app.layout = [
-    html.Tr([html.Td(html.Br())]),
-    html.Tr([html.Td(html.Div(create_filtering_table()))]),
-    html.Tr([html.Td(unit_dropdown())]),
-    html.Tr([html.Td(bag_dropdown())]),
-    html.Tr([html.Td(hunt_code_dropdown())]),
-    html.Tr([html.Td(html.Br())]),
-    html.Tr([html.Td(html.Div(id='filtered_result_table'))]),
-    html.Div([
-        html.Tr([html.Td(html.Div([dcc.Graph(id="percent_odds_graph")])), 
-                html.Td(html.Div([dcc.Graph(id="percent_odds_graph_1stDraw")]))]),
-        html.Tr([html.Td(html.Div([dcc.Graph(id="percent_odds_graph_2ndDraw")])),
-                html.Td(html.Div([dcc.Graph(id="percent_odds_graph_3rdDraw")]))
-                ])
-    ]),
-        html.Td([html.Td("GMU Map"),
-                    html.Td([html.Img(src=encoded_image, style={'width': '100%'})])
-            ]),
-    html.Div(id='output'),
-    dcc.Store(id="query_results")
-]
-
-
-@app.callback(
-    Output("hunt-dropdown", "options"), 
-    Input('query_results', 'data'))
-def generate_hunt_dropdown(query_values):
-
-    if query_values != "":
-        # Convert the data to a DataFrame
-        df = pd.DataFrame.from_dict(query_values, orient='index')
-
-        #create the hunt_code_dropdown list of available selections
-        return [{'label': row['Hunt Code'], 'value': row['Hunt Code']} for _, row in df.iterrows()]
-    else:
-        return []
+    return fig
 
 def get_df_for_pie_chart(df, new_column, total_column, factored_column):
     df[new_column] = df[total_column] / df[factored_column] * 100
     return df
-
-
-@app.callback(
-    Output("percent_odds_graph", "figure"),
-    Output("percent_odds_graph_1stDraw", "figure"),
-    Output("percent_odds_graph_2ndDraw", "figure"),
-    Output("percent_odds_graph_3rdDraw", "figure"),
-    Input('query_results', 'data'),
-    Input('hunt-dropdown', 'value'))
-def generate_charts(query_values, selected_hunt_code):
-
-    if query_values != "":
-        # Convert the data to a DataFrame
-        df = pd.DataFrame.from_dict(query_values, orient='index')
-        try:
-            df_fig_1 = get_df_for_pie_chart(df, 'resident_percent_success', 'Resident_successfull_draw_total', 'Total_resident')
-            df_fig_2 = get_df_for_pie_chart(df, 'resident_1stDraw_percent_success', 'resident_1st_success', '1st_resident')
-            df_fig_3 = get_df_for_pie_chart(df, 'resident_2ndDraw_percent_success', 'resident_2nd_success', '2nd_resident')
-            df_fig_4 = get_df_for_pie_chart(df, 'resident_3rdDraw_percent_success', 'resident_3rd_success', '3rd_resident')
-        except KeyError:
-            return ({}, {}, {}, {})
-        # Create individual pie charts for each hunt code
-        # for idx, row in df.iterrows():
-        try:
-            row_fig_1 = df_fig_1[df_fig_1['Hunt Code'] == selected_hunt_code].iloc[0]
-            row_fig_2 = df_fig_2[df_fig_2['Hunt Code'] == selected_hunt_code].iloc[0]
-            row_fig_3 = df_fig_3[df_fig_3['Hunt Code'] == selected_hunt_code].iloc[0]
-            row_fig_4 = df_fig_4[df_fig_4['Hunt Code'] == selected_hunt_code].iloc[0]
-        except IndexError:
-            return ({}, {}, {}, {})
-        fig1 = create_pie_chart(row_fig_1, "resident_percent_success", "overall")
-        fig2 = create_pie_chart(row_fig_2, "resident_1stDraw_percent_success", "1stDraw")
-        fig3 = create_pie_chart(row_fig_3, "resident_2ndDraw_percent_success", "2ndDraw")
-        fig4 = create_pie_chart(row_fig_4, "resident_3rdDraw_percent_success", "3rdDraw")
-        return fig1, fig2, fig3, fig4
-    else:
-        return ({}, {}, {}, {})
-
-
-@app.callback(
-    [Output('bag_choice', component_property='options'),
-     Output('deer_button', component_property='n_clicks'),
-     Output('elk_button',  component_property='n_clicks'),
-     Output(component_id='animal_choice_deer', component_property='on'),
-     Output(component_id='animal_choice_elk', component_property='on')],
-    [Input(component_id='animal_choice_deer', component_property='on'),
-     Input(component_id='deer_button', component_property='n_clicks'),
-    Input(component_id='animal_choice_elk', component_property='on'),
-    Input(component_id='elk_button', component_property='n_clicks')]
-)
-def ensure_only_one_on(animal_choice_deer, n_clicks_deer, animal_choice_elk, n_clicks_elk):
-    if animal_choice_deer and not(n_clicks_deer) and n_clicks_elk:
-        return Bag.get_deer_bag_drop_down(Bag), 1,0, True, False #, 'deer_choice deer_btn_n:{}  elk_btn_n:{}'.format(n_clicks_deer, n_clicks_elk)
-    elif animal_choice_elk and not(n_clicks_elk) and n_clicks_deer:
-        return Bag.get_elk_bag_drop_down(Bag), 0,1,False, True#, 'elk_choice deer_btn_n:{}  elk_btn_n:{}'.format(n_clicks_deer, n_clicks_elk)
-    elif animal_choice_deer and not(n_clicks_deer) and not(n_clicks_elk):
-        return Bag.get_deer_bag_drop_down(Bag), 1,0, True, False#, 'deer_choice deer_btn_n:{}  elk_btn_n:{}'.format(n_clicks_deer, n_clicks_elk)
-    elif animal_choice_elk and not(n_clicks_elk) and not(n_clicks_deer):
-        return Bag.get_elk_bag_drop_down(Bag), 0,1, False, True#, 'elk_choice deer_btn_n:{}  elk_btn_n:{}'.format(n_clicks_deer, n_clicks_elk)
-    else:
-        return {},0,0,False,False#,""
-
-
-
-
-@callback(
-    Output(component_id='filtered_result_table', component_property='children'),
-    Output('output', 'children'),
-    Output("query_results", "data"),
-    Input(component_id='animal_choice_deer', component_property='on'),
-    Input(component_id='animal_choice_elk', component_property='on'),
-    Input(component_id='add_private', component_property='on'),
-    Input(component_id='add_youth', component_property='on'),
-    Input(component_id='show_results_for_resident', component_property='on'),
-    Input(component_id='show_results_for_nonresident', component_property='on'),
-    Input(component_id='show_results_for_outfitter', component_property='on'),
-    Input(component_id='show_results_for_1stchoice', component_property='on'),
-    Input(component_id='show_results_for_2ndchoice', component_property='on'),
-    Input(component_id='show_results_for_3rdchoice', component_property='on'),
-    Input(component_id='show_results_for_4thchoice', component_property='on'),
-    Input(component_id='show_results_for_totals', component_property='on'),
-    Input(component_id='show_resident_successfull_draw_total', component_property='on'),
-    Input(component_id='show_nonresident_successfull_draw_total', component_property='on'),
-    Input(component_id='show_outfitter_successfull_draw_total', component_property='on'),
-    Input(component_id='show_resident_successfull_draw_percentage', component_property='on'),
-    Input(component_id='show_nonresident_successfull_draw_percentage', component_property='on'),
-    Input(component_id='show_outfitter_successfull_draw_percentage', component_property='on'),
-    Input(component_id='unit_number', component_property='value'),
-    Input(component_id='bag_choice', component_property='value'),
-)
-def update_output_div(animal_choice_deer, animal_choice_elk,
-                      add_private, add_youth,
-                      show_results_for_resident, show_results_for_nonresident, show_results_for_outfitter,
-                      show_results_for_1stchoice, show_results_for_2ndchoice, show_results_for_3rdchoice, show_results_for_4thchoice, show_results_for_totals,
-                      show_resident_successfull_draw_total, show_nonresident_successfull_draw_total, show_outfitter_successfull_draw_total,
-                      show_resident_successfull_draw_percentage, show_nonresident_successfull_draw_percentage, show_outfitter_successfull_draw_percentage,
-                      unit_number, bag_choice):
-    csv_filename = ""
-    odds_summary = []
-    query_result = None
-
-    residency_choice = Residency(show_results_for_resident, show_results_for_nonresident, show_results_for_outfitter)
-    choice_result = Choice(show_results_for_1stchoice, show_results_for_2ndchoice, show_results_for_3rdchoice, show_results_for_4thchoice, show_results_for_totals)
-    success_total = SuccessTotals(show_resident_successfull_draw_total, show_nonresident_successfull_draw_total, show_outfitter_successfull_draw_total)
-    success_percentage = SuccessPercentages(show_resident_successfull_draw_percentage, show_nonresident_successfull_draw_percentage, show_outfitter_successfull_draw_percentage)
-
-    if animal_choice_deer:
-        csv_filename = '2024OddsSummary_Deer.csv'
-
-    elif animal_choice_elk:
-        csv_filename = '2024OddsSummary_Elk.csv'
-
-    elif csv_filename == "":
-        return "", "", ""
-        # return ""
-
-    odds_summary = parser_func(csv_filename)
-    if unit_number is None:
-        return "", "you must choose a unit number", ""
-        # return "", query_result
-    elif bag_choice is None:
-        return "", "you must choose a bag", ""
-        # return "", query_result
-    else:
-        try:
-            query_result = query_odds(odds_summary, unit_number, bag_choice, residency_choice, choice_result, success_total, success_percentage, add_private, add_youth,)
-            
-        except TypeError as error:
-            # return "", "{}".format(error)
-            return "", query_result
-        # return dash_table.DataTable(data=query_result, page_size=10), "", query_result#"{}".format(query_result)
-
-    try:
-        df_display = pd.DataFrame(query_result)
-        df_display = df_display.drop(columns=["resident_1st_success"])
-        df_display = df_display.drop(columns=["nonresident_1st_success"])
-        df_display = df_display.drop(columns=["outfitter_1st_success"])
-        df_display = df_display.drop(columns=["resident_2nd_success"])
-        df_display = df_display.drop(columns=["nonresident_2nd_success"])
-        df_display = df_display.drop(columns=["outfitter_2nd_success"])
-        df_display = df_display.drop(columns=["resident_3rd_success"])
-        df_display = df_display.drop(columns=["nonresident_3rd_success"])
-        df_display = df_display.drop(columns=["outfitter_3rd_success"])
-        df_display = df_display.drop(columns=["resident_4th_success"])
-        df_display = df_display.drop(columns=["nonresident_4th_success"])
-        df_display = df_display.drop(columns=["outfitter_4th_success"])
-        df_display = df_display.drop(columns=["resident_total_success"])
-        df_display = df_display.drop(columns=["nonresident_total_success"])
-        df_display = df_display.drop(columns=["outfitter_total_success"])
-    except KeyError:
-        pass
-
-    return dash_table.DataTable(data=df_display.to_dict('records'), page_size=10), "", {index: value for index, value in enumerate(query_result)}
-
-
-
-
-
-# Run the app
-if __name__ == '__main__':
-    app.run(debug=True)
 
