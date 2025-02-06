@@ -1,28 +1,35 @@
-/* Define button 3D effect */
+/* Define enhanced button 3D effect */
 .shadow-btn {
     transition: all 0.3s ease-in-out;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 6px 20px rgba(0, 0, 0, 0.19);
-    border-radius: 5px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2), 0 12px 40px rgba(0, 0, 0, 0.3); /* Enhanced 3D effect */
+    border-radius: 8px;
+    border: none;
+    padding: 10px 20px; /* Adjust padding for better spacing */
 }
 
+/* Button hover effect with glowing */
 .shadow-btn:hover {
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25), 0 8px 25px rgba(0, 0, 0, 0.22);
-    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3), 0 16px 50px rgba(0, 0, 0, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.6); /* Glowing border effect */
 }
 
+/* Button active effect with pressing look */
 .shadow-btn:active {
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.15);
-    transform: translateY(2px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15), 0 6px 20px rgba(0, 0, 0, 0.25);
+    transform: translateY(2px); /* Keep pressing effect without shifting the div */
 }
 
 /* Adjust table appearance */
 .table {
     width: 100%;
     border-collapse: collapse;
-    text-align: left;
+    text-align: center;
     vertical-align: middle;
+    padding: 10px;
+    margin: 20px auto;
 }
 
+/* Table border and spacing */
 .table-bordered {
     border: 1px solid #dee2e6;
 }
@@ -32,23 +39,89 @@
     background-color: #f9f9f9;
 }
 
-/* Button Colors */
+/* Padding for each cell */
+.table td {
+    padding-right: 15px;
+    padding-left: 15px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+/* Cool Button Colors */
 .btn-primary {
-    background-color: #007bff;
+    background-color: #007bff; /* Cool blue */
     border-color: #007bff;
+    color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
 }
 
 .btn-success {
-    background-color: #28a745;
-    border-color: #28a745;
+    background-color: #17a2b8; /* Teal blue */
+    border-color: #17a2b8;
+    color: #fff;
+    box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
 }
 
 .btn-info {
-    background-color: #17a2b8;
-    border-color: #17a2b8;
+    background-color: #6610f2; /* Purple-blue */
+    border-color: #6610f2;
+    color: #fff;
+    box-shadow: 0 4px 8px rgba(102, 16, 242, 0.3);
 }
 
 .btn-warning {
-    background-color: #ffc107;
-    border-color: #ffc107;
+    background-color: #6f42c1; /* Cool purple */
+    border-color: #6f42c1;
+    color: #fff;
+    box-shadow: 0 4px 8px rgba(111, 66, 193, 0.3);
+}
+
+/* Header styling */
+h3 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* Space between button cells */
+.table td {
+    padding: 15px;  /* Adjust spacing between button cells */
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 768px) {
+    /* Adjust the button size and layout on smaller screens */
+    .shadow-btn {
+        padding: 12px 18px; /* Increase padding for better touch responsiveness */
+        font-size: 14px; /* Slightly smaller text for mobile devices */
+    }
+
+    /* Stack buttons vertically in the table on small screens */
+    .table td {
+        display: block; /* Make each cell a block element */
+        margin-bottom: 10px; /* Space out the cells */
+        text-align: center; /* Align text to center */
+    }
+
+    .table {
+        margin: 10px 0; /* Reduce margin for smaller screens */
+    }
+
+    /* Ensure the table is horizontally scrollable */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Adjust header for mobile */
+    h3 {
+        font-size: 18px; /* Adjust font size for mobile screens */
+        margin-bottom: 15px; /* Reduce space between header and content */
+    }
+}
+
+/* Mobile-friendly table with horizontal scroll */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 auto;
 }

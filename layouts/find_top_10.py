@@ -7,7 +7,7 @@ from models import Residency, SuccessPercentages, SuccessTotals, Choice, Bag
 find_top_10_layout = html.Div([
                                 dcc.Store(id="top_10_results"),
                                 html.Div([
-                                    html.H2("Find the top 10 draw odd results by making selections below"),
+                                    html.H2("Find the top 10 draw odd results by clicking the search buttons below"),
                                 ]),
                                 html.Tr([html.Td(html.Br())]),
                                 html.Tr([html.Td(html.Div(create_choice_table()))]),

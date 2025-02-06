@@ -4,17 +4,39 @@ import dash_bootstrap_components as dbc
 
 def create_choice_table():
     row1 = html.Tr([
-        html.Td("Get top 10 odds for Deer"),
+        html.Td("Get top 10 odds for Deer", style={"padding-right": "15px", "padding-left": "15px", "padding-top": "10px", "padding-bottom": "10px"}),
         html.Td([
-            dbc.Button('Search', id='search_top_10_deer', n_clicks=0, color="primary", size="sm", className="mr-2 shadow-btn"),
-            dbc.Button('Search', id='search_top_10_elk', n_clicks=0, color="success", size="sm", className="mr-2 shadow-btn"),
-            dbc.Button('Search', id='search_top_10_unit', n_clicks=0, color="info", size="sm", className="mr-2 shadow-btn"),
+            dbc.Button('Search', id='search_top_10_deer', n_clicks=0, color="primary", size="sm", className="shadow-btn")
+        ], style={"padding-right": "15px", "padding-left": "15px", "padding-top": "10px", "padding-bottom": "10px"}),
+
+        html.Td("Get top 10 odds for Elk", style={"padding-right": "15px", "padding-left": "15px", "padding-top": "10px", "padding-bottom": "10px"}),
+        html.Td([
+            dbc.Button('Search', id='search_top_10_elk', n_clicks=0, color="success", size="sm", className="shadow-btn")
+        ], style={"padding-right": "15px", "padding-left": "15px", "padding-top": "10px", "padding-bottom": "10px"}),
+
+        html.Td("Get top 10 odds based on Unit", style={"padding-right": "15px", "padding-left": "15px", "padding-top": "10px", "padding-bottom": "10px"}),
+        html.Td([
+            dbc.Button('Search', id='search_top_10_unit', n_clicks=0, color="info", size="sm", className="shadow-btn")
+        ], style={"padding-right": "15px", "padding-left": "15px", "padding-top": "10px", "padding-bottom": "10px"}),
+
+        html.Td("Get top 10 odds based on Weapon Choice", style={"padding-right": "15px", "padding-left": "15px", "padding-top": "10px", "padding-bottom": "10px"}),
+        html.Td([
             dbc.Button('Search', id='search_top_10_hunt_type', n_clicks=0, color="warning", size="sm", className="shadow-btn")
-        ])
+        ], style={"padding-right": "15px", "padding-left": "15px", "padding-top": "10px", "padding-bottom": "10px"})
     ])
 
     # Define table body
-    table = html.Tbody([row1])
+    table_body = html.Tbody([row1])
+
+    # Wrap the table in a div with the responsive class for mobile-friendliness
+    table = html.Div(
+                    children=[
+                        html.Div(
+                                children=html.Table(table_body, className="table table-bordered table-striped"), 
+                                className="table-responsive"
+                                )
+                            ]
+                        )
 
     return table
 
