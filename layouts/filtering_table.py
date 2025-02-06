@@ -1,20 +1,12 @@
-from dash import dcc, html, Input, Output, State, callback, dash_table
+from dash import dcc, html, Input, Output, dash_table
 import pandas as pd
 from components import unit_dropdown, bag_dropdown, hunt_code_dropdown, create_pie_chart, encoded_image, create_filtering_table
-from data_handlers import scrape_for_deer, scrape_for_elk
-from data_handlers.query_odds import drop_success, filter_on_boolean_switches, get_df_for_pie_chart, parser_func, query_odds
-from models import Residency, SuccessPercentages, SuccessTotals, Choice, Bag
+from data_handlers.query_odds import drop_success, filter_on_boolean_switches, get_df_for_pie_chart
+from models import Residency, SuccessPercentages, SuccessTotals, Choice
+
 
 # Layout for Page 1, including a Pie chart
 filtering_table_layout = html.Div([
-                                    dcc.Interval(
-                                        id='interval-component', 
-                                        interval=5 * 1000,  # in milliseconds (1ms means it runs right after load)
-                                        n_intervals=0,  # Runs once when the page loads
-                                        disabled=False  # Makes sure the interval is active right after page load
-                                    ),
-                                    dcc.Store(id="proclamation_results", storage_type='local', data={}),
-                                    dcc.Store(id="query_results"),
                                     html.Tr([html.Td(html.Br())]),
                                     html.Tr([html.Td(html.Div(create_filtering_table()))]),
                                     html.Tr([html.Td(unit_dropdown())]),
@@ -31,42 +23,12 @@ filtering_table_layout = html.Div([
                                                     html.Td([html.Img(src=encoded_image, style={'width': '100%'})])
                                             ]),
                                     html.Div(id='output'),
-                                    dcc.Link('Go to Page 2', href='/page-2')  # Link to Page 2
+                                    dcc.Link('Go to Page find_top_10', href='/find_top_10')  # Link to Page 2
                                 ])
 
-# Callback for Page 1 to render the Pie chart
+
+# original callbacks to show draw result odds
 def filtering_table_callbacks(app):
-    # Callback that runs once after the page loads
-    @app.callback(
-        Output("proclamation_results", "data"),
-        Input('interval-component', 'n_intervals'),
-        State('proclamation_results', 'data')  # Check if data is already in the store
-    )
-    def on_page_load(n, existing_data):
-
-        if n == 1:  # The first interval (immediately after the page loads)
-            if not existing_data:  # If no data is present in store
-                deer_proclamation_df = scrape_for_deer()
-                elk_proclamation_df = scrape_for_elk()
-                return deer_proclamation_df.append(elk_proclamation_df, ignore_index=False, sort=False).to_dict("dict")
-            return existing_data
-        return existing_data  # Return existing data if n_intervals isn't 1
-
-
-    @app.callback(
-        Output("hunt_dropdown", "options"), 
-        Input('query_results', 'data'))
-    def generate_hunt_dropdown(query_values):
-
-        if query_values != None and query_values !=  {"": ""}:
-            # Convert the data to a DataFrame
-            df = pd.DataFrame.from_dict(query_values, orient='index')
-
-            #create the hunt_code_dropdown list of available selections
-            return [{'label': row['Hunt Code'], 'value': row['Hunt Code']} for _, row in df.iterrows()]
-        else:
-            return []
-
 
     # Callback to update merged data and pie charts based on selected unit
     @app.callback(
@@ -147,88 +109,4 @@ def filtering_table_callbacks(app):
                 return [None, None]
         else:
             return [None, None]
-
-    @app.callback(
-        [Output('bag_choice', component_property='options'),
-        Output('unit_number', component_property='options'),
-        Output('deer_button', component_property='n_clicks'),
-        Output('elk_button',  component_property='n_clicks'),
-        Output(component_id='animal_choice_deer', component_property='on'),
-        Output(component_id='animal_choice_elk', component_property='on')],
-        [Input(component_id='animal_choice_deer', component_property='on'),
-        Input(component_id='deer_button', component_property='n_clicks'),
-        Input(component_id='animal_choice_elk', component_property='on'),
-        Input(component_id='elk_button', component_property='n_clicks')]
-    )
-    def ensure_only_one_on(animal_choice_deer, n_clicks_deer, animal_choice_elk, n_clicks_elk):
-        if animal_choice_deer and not(n_clicks_deer) and n_clicks_elk:
-            return Bag.get_deer_bag_drop_down(Bag), Bag.get_unit_dropdown_from_bag(Bag, 'deer'), 1,0, True, False
-        elif animal_choice_elk and not(n_clicks_elk) and n_clicks_deer:
-            return Bag.get_elk_bag_drop_down(Bag), Bag.get_unit_dropdown_from_bag(Bag, 'elk'), 0,1,False, True
-        elif animal_choice_deer and not(n_clicks_deer) and not(n_clicks_elk):
-            return Bag.get_deer_bag_drop_down(Bag), Bag.get_unit_dropdown_from_bag(Bag, 'deer'), 1,0, True, False
-        elif animal_choice_elk and not(n_clicks_elk) and not(n_clicks_deer):
-            return Bag.get_elk_bag_drop_down(Bag), Bag.get_unit_dropdown_from_bag(Bag, 'elk'), 0,1, False, True
-        else:
-            return {},{},0,0,False,False
-
-
-
-
-    @callback(
-        Output('output', 'children'),
-        Output("query_results", "data"),
-        Input(component_id='animal_choice_deer', component_property='on'),
-        Input(component_id='animal_choice_elk', component_property='on'),
-        Input(component_id='add_private', component_property='on'),
-        Input(component_id='add_youth', component_property='on'),
-        Input(component_id='show_results_for_resident', component_property='on'),
-        Input(component_id='show_results_for_nonresident', component_property='on'),
-        Input(component_id='show_results_for_outfitter', component_property='on'),
-        Input(component_id='show_results_for_1stchoice', component_property='on'),
-        Input(component_id='show_results_for_2ndchoice', component_property='on'),
-        Input(component_id='show_results_for_3rdchoice', component_property='on'),
-        Input(component_id='show_results_for_4thchoice', component_property='on'),
-        Input(component_id='show_results_for_totals', component_property='on'),
-        Input(component_id='show_resident_successfull_draw_total', component_property='on'),
-        Input(component_id='show_nonresident_successfull_draw_total', component_property='on'),
-        Input(component_id='show_outfitter_successfull_draw_total', component_property='on'),
-        Input(component_id='show_resident_successfull_draw_percentage', component_property='on'),
-        Input(component_id='show_nonresident_successfull_draw_percentage', component_property='on'),
-        Input(component_id='show_outfitter_successfull_draw_percentage', component_property='on'),
-        Input(component_id='unit_number', component_property='value'),
-        Input(component_id='bag_choice', component_property='value'),
-    )
-    def update_output_div(animal_choice_deer, animal_choice_elk,
-                        add_private, add_youth,
-                        show_results_for_resident, show_results_for_nonresident, show_results_for_outfitter,
-                        show_results_for_1stchoice, show_results_for_2ndchoice, show_results_for_3rdchoice, show_results_for_4thchoice, show_results_for_totals,
-                        show_resident_successfull_draw_total, show_nonresident_successfull_draw_total, show_outfitter_successfull_draw_total,
-                        show_resident_successfull_draw_percentage, show_nonresident_successfull_draw_percentage, show_outfitter_successfull_draw_percentage,
-                        unit_number, bag_choice):
-        csv_filename = ""
-        odds_summary = []
-        query_result = None
-
-        residency_choice = Residency(show_results_for_resident, show_results_for_nonresident, show_results_for_outfitter)
-        choice_result = Choice(show_results_for_1stchoice, show_results_for_2ndchoice, show_results_for_3rdchoice, show_results_for_4thchoice, show_results_for_totals)
-        success_total = SuccessTotals(show_resident_successfull_draw_total, show_nonresident_successfull_draw_total, show_outfitter_successfull_draw_total)
-        success_percentage = SuccessPercentages(show_resident_successfull_draw_percentage, show_nonresident_successfull_draw_percentage, show_outfitter_successfull_draw_percentage)
-
-        if animal_choice_deer:
-            csv_filename = '2024OddsSummary_Deer.csv'
-        elif animal_choice_elk:
-            csv_filename = '2024OddsSummary_Elk.csv'
-        elif csv_filename == "":
-            return "", {"": ""}
-
-        odds_summary = parser_func("input/{}".format(csv_filename))
-        if unit_number is None:
-            return "you must choose a unit number", {"": ""}
-        else:
-            try:
-                query_result = query_odds(odds_summary, unit_number, bag_choice, residency_choice, choice_result, success_total, success_percentage, add_private, add_youth,)
-            except TypeError as error:
-                return "", {"": ""}
-
-        return "", {index: value for index, value in enumerate(query_result)}
+        

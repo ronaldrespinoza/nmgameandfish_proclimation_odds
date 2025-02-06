@@ -1,10 +1,6 @@
 import csv
-from dash import dcc, html
-import dash_bootstrap_components as dbc
-import dash_daq as daq
 import pandas as pd
-import plotly.express as px
-import base64
+
 
 
 class GetListFromQuery():
