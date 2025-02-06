@@ -48,3 +48,19 @@ def hunt_code_dropdown():
                     ),
                 ),
             ], className="mt-2",)
+
+
+
+def available_weapon_dropdown():
+    return  dbc.Row([
+                dbc.Label('Available weapon:', className="my-label"),
+                dbc.Col(
+                    dcc.Dropdown(
+                        id='weapon_dropdown',
+                        options=[],
+                        value="",
+                        multi=False,
+                        style={'float': 'left',"width":"200px"}
+                    ),
+                ),
+            ], className="mt-2",)

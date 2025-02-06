@@ -18,13 +18,10 @@ app.layout = [
         disabled=False  # Makes sure the interval is active right after page load
     ),
     dcc.Store(id="proclamation_results", storage_type='local', data={}),
-    dcc.Store(id="query_results"),
-    dcc.Location(id='url', refresh=False),  # Used for URL routing
+    dcc.Location(id='url', refresh=True, pathname='/filtering_table'),  # Used for URL routing
     html.Div(id='page-content')  # The content of the page changes here
     
 ]
-
-
 
 # Callback that runs on application execution
 @app.callback(
@@ -54,14 +51,17 @@ def display_page(pathname):
     common_callbacks(app)
     if pathname == '/filtering_table':
         # Register the callbacks for each page to the app instance
-        filtering_table_callbacks(app)
-        layout = filtering_table_layout  # Return the filtering table layout
+        return filtering_table_layout  # Return the filtering table layout
     elif pathname == '/find_top_10':
-        layout =  find_top_10_layout  # Return the "find top 10" layout
-        find_top_10_callbacks(app)
+        return find_top_10_layout  # Return the "find top 10" layout
     else:
-        layout =  filtering_table_layout  # Return the filtering table layout
-    return layout
+        return html.Div([
+                            html.H1("404 Page Not Found", style={'color': 'red'}),
+                            html.P("Sorry, the page you are looking for does not exist.")
+                        ])
+
+filtering_table_callbacks(app)
+find_top_10_callbacks(app)
 
 # Run the app
 if __name__ == '__main__':
