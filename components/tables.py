@@ -2,18 +2,18 @@ from dash import html
 import dash_daq as daq
 
 def create_choice_table():
-    row1 = html.Tr([html.td("Get top 10 odds for Deer"),
-                    html.td([
+    row1 = html.Tr([html.Td("Get top 10 odds for Deer"),
+                    html.Td([
                         html.Button('Top 10 Deer', id='my-button', n_clicks=0)
                         ])
                     ])
-    row2 = html.Tr([html.td("Get top 10 odds for Elk"),
-                    html.td([
+    row2 = html.Tr([html.Td("Get top 10 odds for Elk"),
+                    html.Td([
                         html.Button('Top 10 Elk', id='my-button', n_clicks=0)
                         ])
                     ])
-    row3 = html.Tr([html.td("Get top 10 odds based on Unit"),
-                    html.td([
+    row3 = html.Tr([html.Td("Get top 10 odds based on Unit"),
+                    html.Td([
                         html.Button('Top 10 in Unit', id='my-button', n_clicks=0)
                         ])
                     ])
