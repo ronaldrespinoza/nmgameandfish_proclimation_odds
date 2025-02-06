@@ -1,26 +1,20 @@
 from dash import html
 import dash_daq as daq
+import dash_bootstrap_components as dbc
 
 def create_choice_table():
-    row1 = html.Tr([html.Td("Get top 10 odds for Deer"),
-                    html.Td([
-                        html.Button('Top 10 Deer', id='my-button', n_clicks=0)
-                        ])
-                    ])
-    row2 = html.Tr([html.Td("Get top 10 odds for Elk"),
-                    html.Td([
-                        html.Button('Top 10 Elk', id='my-button', n_clicks=0)
-                        ])
-                    ])
-    row3 = html.Tr([html.Td("Get top 10 odds based on Unit"),
-                    html.Td([
-                        html.Button('Top 10 in Unit', id='my-button', n_clicks=0)
-                        ])
-                    ])
-    table_body = [html.Tbody([row1]),
-                  html.Tbody([row2]),
-                  html.Tbody([row3])]
-    table = html.Table(table_body, style={'vertical-align': 'left', 'text-align':'end'})
+    row1 = html.Tr([
+        html.Td("Get top 10 odds for Deer"),
+        html.Td([
+            dbc.Button('Search', id='search_top_10_deer', n_clicks=0, color="primary", size="sm", className="mr-2 shadow-btn"),
+            dbc.Button('Search', id='search_top_10_elk', n_clicks=0, color="success", size="sm", className="mr-2 shadow-btn"),
+            dbc.Button('Search', id='search_top_10_unit', n_clicks=0, color="info", size="sm", className="mr-2 shadow-btn"),
+            dbc.Button('Search', id='search_top_10_hunt_type', n_clicks=0, color="warning", size="sm", className="shadow-btn")
+        ])
+    ])
+
+    # Define table body
+    table = html.Tbody([row1])
 
     return table
 

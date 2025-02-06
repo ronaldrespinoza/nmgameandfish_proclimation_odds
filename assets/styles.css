@@ -1,0 +1,54 @@
+/* Define button 3D effect */
+.shadow-btn {
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 6px 20px rgba(0, 0, 0, 0.19);
+    border-radius: 5px;
+}
+
+.shadow-btn:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25), 0 8px 25px rgba(0, 0, 0, 0.22);
+    transform: translateY(-3px);
+}
+
+.shadow-btn:active {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(2px);
+}
+
+/* Adjust table appearance */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.table-bordered {
+    border: 1px solid #dee2e6;
+}
+
+/* Styling for rows */
+.table-striped tbody tr:nth-child(odd) {
+    background-color: #f9f9f9;
+}
+
+/* Button Colors */
+.btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.btn-success {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.btn-info {
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+}
+
+.btn-warning {
+    background-color: #ffc107;
+    border-color: #ffc107;
+}

@@ -11,7 +11,6 @@ find_top_10_layout = html.Div([
                                 ]),
                                 html.Tr([html.Td(html.Br())]),
                                 html.Tr([html.Td(html.Div(create_choice_table()))]),
-                                html.Tr([html.Td(available_weapon_dropdown())]),
                             ])
 
 
