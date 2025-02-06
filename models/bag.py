@@ -26,7 +26,7 @@ class Bag(enum.Enum):
         return bag_options
 
     def get_unit_dropdown_from_bag(self, animal_choice):
-        with open('input//{}_unit_dropdown.txt'.format(animal_choice), 'r') as file:
+        with open('.//input//{}_unit_dropdown.txt'.format(animal_choice), 'r') as file:
             units = file.readlines()
     
         # Strip any unwanted whitespace characters (like newlines)

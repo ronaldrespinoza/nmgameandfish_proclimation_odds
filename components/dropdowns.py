@@ -17,6 +17,21 @@ def unit_dropdown(width):
         ),
     ], className="mt-2")
 
+def top10_unit_dropdown(width):
+    return dbc.Row([
+        dbc.Label('Unit Choices:', className="my-label"),
+        dbc.Col(
+            dcc.Dropdown(
+                id='top10_unit_numbers',
+                className='dash-bootstrap',
+                options={},
+                value="", 
+                multi=False,
+                style={'float': 'left', "width": width, "max-height": "100%"}
+            ),
+        ),
+    ], className="mt-2")
+
 
 def bag_dropdown():
     return  dbc.Row([

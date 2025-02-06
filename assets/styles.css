@@ -119,9 +119,47 @@ h3 {
     }
 }
 
-/* Mobile-friendly table with horizontal scroll */
+/* Make the dropdown menus scrollable */
+.dropdown-menu {
+    max-height: 150px; /* Set max height for dropdown */
+    overflow-y: auto; /* Allow vertical scrolling inside dropdowns */
+}
+
+/* Optional: Style the table for better visibility */
+.table-bordered {
+    border: 1px solid #dee2e6;
+}
+
+.table-striped tbody tr:nth-child(odd) {
+    background-color: #f9f9f9;
+}
+
+/* Ensure radio items are properly spaced and aligned */
+.dcc-radio-items {
+    display: block;
+    padding: 10px;
+    width: 100%;
+}
+
+.dcc-radio-items label {
+    display: block;
+    padding: 5px 0;
+}
+
+
+/* Ensures the table spans the full screen */
+.table {
+    width: 100%;
+    table-layout: fixed;
+}
+
+/* Makes the table responsive on smaller screens */
 .table-responsive {
+    width: 100%;
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    margin: 0 auto;
+}
+
+/* Ensures the dropdown spans the full width */
+.dcc-dropdown {
+    width: 100%;
 }
