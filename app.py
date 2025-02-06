@@ -24,10 +24,7 @@ app.layout = [
     
 ]
 
-# Register the callbacks for each page to the app instance
-common_callbacks(app)
-filtering_table_callbacks(app)
-find_top_10_callbacks(app)
+
 
 # Callback that runs on application execution
 @app.callback(
@@ -37,7 +34,7 @@ find_top_10_callbacks(app)
 )
 def on_page_load(n, existing_data):
     # Debugging log
-    print(f"on_page_load triggered, n_intervals: {n}, existing_data: {existing_data}")
+    # print(f"on_page_load triggered, n_intervals: {n}, existing_data: {existing_data}")
 
     if n == 1:  # The first interval (immediately after the page loads)
         if not existing_data:  # If no data is present in store
@@ -54,11 +51,14 @@ def on_page_load(n, existing_data):
     Input('url', 'pathname')
 )
 def display_page(pathname):
-
+    common_callbacks(app)
     if pathname == '/filtering_table':
+        # Register the callbacks for each page to the app instance
+        filtering_table_callbacks(app)
         layout = filtering_table_layout  # Return the filtering table layout
     elif pathname == '/find_top_10':
         layout =  find_top_10_layout  # Return the "find top 10" layout
+        find_top_10_callbacks(app)
     else:
         layout =  filtering_table_layout  # Return the filtering table layout
     return layout
