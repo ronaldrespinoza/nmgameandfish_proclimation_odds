@@ -11,6 +11,12 @@ find_top_10_layout = html.Div([
                                 ]),
                                 html.Tr([html.Td(html.Br())]),
                                 html.Tr([html.Td(html.Div(create_choice_table()))]),
+                                html.Tr([html.Td(html.Div(id='top10_result_info_table'))]),
+                                # Pie chart for resident success rate
+                                html.Div([
+                                    html.H2("Top 10 Success Rates as pie charts"),
+                                    html.Div(id='top10-pie-chart-container')  # This will hold the dynamically generated pie charts
+                                ]),
                             ])
 
 

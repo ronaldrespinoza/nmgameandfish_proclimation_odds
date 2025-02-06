@@ -1,7 +1,7 @@
 import dash_bootstrap_components as dbc
 from dash import dcc
 
-def unit_dropdown():
+def unit_dropdown(width):
     return dbc.Row([
         dbc.Label('Unit Choices:', className="my-label"),
         dbc.Col(
@@ -12,7 +12,7 @@ def unit_dropdown():
                 value="",
                 multi=False,
                 clearable=True,
-                style={'float': 'left', "width": "50%"}
+                style={'float': 'left', "width": width}
             ),
         ),
     ], className="mt-2")
@@ -60,7 +60,7 @@ def available_weapon_dropdown():
                         options=[],
                         value="",
                         multi=False,
-                        style={'float': 'left',"width":"200px"}
+                        style={'float': 'left',"width":"100%"}
                     ),
                 ),
             ], className="mt-2",)

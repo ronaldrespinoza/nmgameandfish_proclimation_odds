@@ -11,7 +11,7 @@ filtering_table_layout = html.Div([
                                     dcc.Store(id="query_results"),
                                     html.Tr([html.Td(html.Br())]),
                                     html.Tr([html.Td(html.Div(create_filtering_table()))]),
-                                    html.Tr([html.Td(unit_dropdown())]),
+                                    html.Tr([html.Td(unit_dropdown(width="50%"))]),
                                     html.Tr([html.Td(bag_dropdown())]),
                                     html.Tr([html.Td(hunt_code_dropdown())]),
                                     html.Tr([html.Td(html.Br())]),

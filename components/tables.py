@@ -1,6 +1,7 @@
 from dash import html
 import dash_daq as daq
 import dash_bootstrap_components as dbc
+from components.dropdowns import unit_dropdown, available_weapon_dropdown
 
 def create_choice_table():
     row1 = html.Tr([
@@ -13,7 +14,8 @@ def create_choice_table():
         html.Td([
             dbc.Button('Search', id='search_top_10_elk', n_clicks=0, color="success", size="sm", className="shadow-btn")
         ], style={"padding-right": "15px", "padding-left": "15px", "padding-top": "10px", "padding-bottom": "10px"}),
-
+    ])
+    row2 = html.Tr([
         html.Td("Get top 10 odds based on Unit", style={"padding-right": "15px", "padding-left": "15px", "padding-top": "10px", "padding-bottom": "10px"}),
         html.Td([
             dbc.Button('Search', id='search_top_10_unit', n_clicks=0, color="info", size="sm", className="shadow-btn")
@@ -24,9 +26,9 @@ def create_choice_table():
             dbc.Button('Search', id='search_top_10_hunt_type', n_clicks=0, color="warning", size="sm", className="shadow-btn")
         ], style={"padding-right": "15px", "padding-left": "15px", "padding-top": "10px", "padding-bottom": "10px"})
     ])
-
+    row3 = html.Tr([html.Td([]), html.Td([unit_dropdown(width="100%")]), html.Td([]), html.Td([available_weapon_dropdown()])])
     # Define table body
-    table_body = html.Tbody([row1])
+    table_body = html.Tbody([row1, row2]), html.Tbody([row3])
 
     # Wrap the table in a div with the responsive class for mobile-friendliness
     table = html.Div(
