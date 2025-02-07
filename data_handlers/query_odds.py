@@ -67,7 +67,7 @@ def filter_on_boolean_switches(filtered_list, residency_choice, choice_result, s
         if not(residency_choice.resident):
             df = df.drop(columns=["1st_resident", "2nd_resident", "3rd_resident", "Total_resident"])
         if not(residency_choice.non_resident):
-            df = df.drop(columns=["1st_non_resident", "2nd_non_resident", "3rd_non_resident", "Total_non_resident"])
+            df = df.drop(columns=["1st_nonresident", "2nd_nonresident", "3rd_nonresident", "Total_nonresident"])
         if not(residency_choice.outfitter):
             df = df.drop(columns=["1st_outfitter", "2nd_outfitter", "3rd_outfitter", "Total_outfitter"])
     except KeyError:
@@ -91,7 +91,7 @@ def filter_on_boolean_switches(filtered_list, residency_choice, choice_result, s
         if not(success_total.non_resident_total):
             df = df.drop(columns=["Nonresident_successfull_draw_total"])
         if not(success_total.outfitter_total):
-            df = df.drop(columns=["Outiftter_successfull_draw_total"])
+            df = df.drop(columns=["Outfitter_successfull_draw_total"])
     except KeyError:
         pass
 
@@ -148,17 +148,17 @@ def new_odds_summary_dict():
                         "2nd_resident": "",
                         "3rd_resident": "",
                         "Total_resident":"",
-                        "1st_non_resident": "",
-                        "2nd_non_resident": "",
-                        "3rd_non_resident": "",
-                        "Total_non_resident":"",
+                        "1st_nonresident": "",
+                        "2nd_nonresident": "",
+                        "3rd_nonresident": "",
+                        "Total_nonresident":"",
                         "1st_outfitter": "",
                         "2nd_outfitter": "",
                         "3rd_outfitter": "",
                         "Total_outfitter":"",
                         "Resident_successfull_draw_total": "",
                         "Nonresident_successfull_draw_total": "",
-                        "Outiftter_successfull_draw_total": "",
+                        "Outfitter_successfull_draw_total": "",
                         "Total_drawn": "",
                         "Resident_percentage_allocation":"",
                         "nonresident_percentage_allocation": "",
@@ -204,12 +204,22 @@ def parser_func(csv_filename):
 def get_df_for_pie_chart(df, new_column, total_column, factored_column):
     """
     This function computes a new column for pie chart percentages. It handles cases where 
-    the total_column is 0 or None to avoid division errors.
+    the total_column or factored_column is 0 or None to avoid division errors.
     """
-    # Check if total_column is 0 or None to avoid division by zero or invalid calculations
-    df[new_column] = df.apply(
-        lambda row: 0 if row[total_column] == 0 or row[total_column] is None else (row[total_column] / row[factored_column]) * 100,
-        axis=1
-    )
+    # Initialize the new column to be 0 by default and ensure it's of type float
+    df[new_column] = 0.0  # Make sure the column is of float type
+
+    # Iterate through each row in the DataFrame
+    for index, row in df.iterrows():
+        # Check if total_column or factored_column is 0 or None
+        if row[total_column] == 0 or row[total_column] is None or row[factored_column] == 0 or row[factored_column] is None:
+            # If condition met, leave value as 0
+            df.at[index, new_column] = 0.0  # Make sure the assignment is of type float
+        else:
+            # Otherwise, calculate the percentage and ensure it's stored as a float
+            df.at[index, new_column] = float(row[total_column] / row[factored_column]) * 100
+
     return df
+
+
 

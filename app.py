@@ -17,12 +17,12 @@ app.layout = [
     # Navbar (using Dash Bootstrap Components)
     dbc.NavbarSimple(
         children=[
-            dbc.NavItem(dbc.NavLink("Home", href="/")),
+            dbc.NavItem(dbc.NavLink("Home", href="/Home")),
             dbc.NavItem(dbc.NavLink("filtering table", href="/filtering_table")),
             dbc.NavItem(dbc.NavLink("top 10", href="/find_top_10")),
             dbc.NavItem(dbc.NavLink("About", href="/about"))
         ],
-        brand="My Dash App",
+        brand="NM Game and Fish Draw Odds and Potential Trip Success",
         brand_href="/",
         color="dark",
         dark=True

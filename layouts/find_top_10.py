@@ -19,6 +19,91 @@ find_top_10_layout = html.Div([
                                 ], style={"width":"100%"}),
                             ])
 
+def get_odds_summary():
+    csv_filename = '2024OddsSummary_Deer.csv'
+    odds_summary = parser_func("input//odds_reports//{}".format(csv_filename))
+    return pd.DataFrame(odds_summary)
+
+
+def update_filtered_df_with_percent_success(filtered_df, new_column, total_success, total_submission):
+    return get_df_for_pie_chart(filtered_df, new_column, total_success, total_submission)
+
+
+def create_all_percent_success():
+    # Define the column mappings
+    column_mappings = [
+        ('resident_percent_success', 'Resident_successfull_draw_total', 'Total_resident'),
+        ('resident_1stDraw_percent_success', 'resident_1st_success', '1st_resident'),
+        ('resident_2ndDraw_percent_success', 'resident_2nd_success', '2nd_resident'),
+        ('resident_3rdDraw_percent_success', 'resident_3rd_success', '3rd_resident'),
+        ('nonresident_percent_success', 'Nonresident_successfull_draw_total', 'Total_nonresident'),
+        ('nonresident_1stDraw_percent_success', 'nonresident_1st_success', '1st_nonresident'),
+        ('nonresident_2ndDraw_percent_success', 'nonresident_2nd_success', '2nd_nonresident'),
+        ('nonresident_3rdDraw_percent_success', 'nonresident_3rd_success', '3rd_nonresident'),
+        ('outfitter_percent_success', 'Outfitter_successfull_draw_total', 'Total_outfitter'),
+        ('outfitter_1stDraw_percent_success', 'outfitter_1st_success', '1st_outfitter'),
+        ('outfitter_2ndDraw_percent_success', 'outfitter_2nd_success', '2nd_outfitter'),
+        ('outfitter_3rdDraw_percent_success', 'outfitter_3rd_success', '3rd_outfitter')
+    ]
+
+    # Create the success_dict as a list of dictionaries
+    success_dict_list = []
+
+    for new_column, total_success, total_submission in column_mappings:
+        # For each mapping, create a dictionary with the required structure
+        success_dict = {
+            "new_column": new_column,
+            "total_success": total_success,
+            "total_submission": total_submission
+        }
+        
+        # Append the dictionary to the list
+        success_dict_list.append(success_dict)
+    
+    return success_dict_list
+
+def apply_all_percent_success_to_df(filtered_df):
+    # Get the success_dict_list from the create_all_percent_success function
+    success_dict_list = create_all_percent_success()
+    # Iterate through each dictionary in success_dict_list and update the filtered_df
+    for success_dict in success_dict_list:
+        new_column = success_dict["new_column"]
+        total_success = success_dict["total_success"]
+        total_submission = success_dict["total_submission"]
+        # Update the DataFrame with the calculated percentage for this mapping
+        filtered_df = update_filtered_df_with_percent_success(filtered_df, new_column, total_success, total_submission)
+
+    return filtered_df
+
+def get_top_10_percent_success(filtered_df, new_column):
+    """
+    Get top 10 rows from filtered_df based on the percentage success for a specific new_column.
+    """
+    top_10_df = filtered_df.nlargest(10, new_column)
+    return top_10_df
+
+
+def create_top_10_percent_success_dfs(filtered_df):
+    """
+    Create a list of DataFrames, each containing the top 10 largest percent values for each new_column.
+    """
+    success_dict_list = create_all_percent_success()  # Get the list of dictionaries
+    
+    # List to store the top 10 DataFrames for each new_column
+    top_10_dfs = []
+
+    # Iterate over each dictionary in success_dict_list
+    for success_dict in success_dict_list:
+        new_column = success_dict["new_column"]
+        
+        # Get the top 10 DataFrame for this new_column
+        top_10_df = get_top_10_percent_success(filtered_df, new_column)
+        
+        # Append the top 10 DataFrame to the list
+        top_10_dfs.append(top_10_df)
+
+    return top_10_dfs
+
 
 # Callbacks for finding the top 10 results of the draw
 def find_top_10_callbacks(app):
@@ -27,9 +112,7 @@ def find_top_10_callbacks(app):
         Input('proclamation_results', 'data')
     )
     def top10_unit_dropdown(proclamation_results):
-        # print(Bag.get_unit_dropdown_from_bag('deer').append(Bag.get_unit_dropdown_from_bag('elk')))
         return Bag.get_unit_dropdown_from_bag(Bag, 'deer')
-        # return Bag.get_unit_dropdown_from_bag('deer').append(Bag.get_unit_dropdown_from_bag('elk'))
 
 
     # @app.callback(
@@ -51,27 +134,24 @@ def find_top_10_callbacks(app):
         allow_duplicate=True)
     def find_top_10_deer(proclamation_results, search_top_10_deer, unit_number):
         if search_top_10_deer:
-            csv_filename = '2024OddsSummary_Deer.csv'
-            odds_summary = parser_func("input//odds_reports//{}".format(csv_filename))
-            query_result_df = pd.DataFrame(odds_summary)
+            query_result_df = get_odds_summary()
             proclamation_results_df = pd.DataFrame(proclamation_results)
+
             try:
                 filtered_df = pd.merge(query_result_df, proclamation_results_df, on=['Hunt Code', 'Licenses', 'Bag'], how='inner')
+
                 # Create a list to store pie chart components (dcc.Graph)
                 pie_chart_components = []
-
+                success_dict_list = create_all_percent_success()
+                
                 # Calculate the percentage values before generating pie charts
-                filtered_df = get_df_for_pie_chart(filtered_df, 'resident_percent_success', 'Resident_successfull_draw_total', 'Total_resident')
-                filtered_df = get_df_for_pie_chart(filtered_df, 'resident_1stDraw_percent_success', 'resident_1st_success', '1st_resident')
-                filtered_df = get_df_for_pie_chart(filtered_df, 'resident_2ndDraw_percent_success', 'resident_2nd_success', '2nd_resident')
-                filtered_df = get_df_for_pie_chart(filtered_df, 'resident_3rdDraw_percent_success', 'resident_3rd_success', '3rd_resident')
+                filtered_df = apply_all_percent_success_to_df(filtered_df)
 
-                top10_resident_percent_success = filtered_df.nlargest(10, 'resident_percent_success')
-                top10_resident_1stDraw_percent_success = filtered_df.nlargest(10, 'resident_1stDraw_percent_success')
-                top10_resident_2ndDraw_percent_success = filtered_df.nlargest(10, 'resident_2ndDraw_percent_success')
-                top10_resident_3rdDraw_percent_success = filtered_df.nlargest(10, 'resident_3rdDraw_percent_success')
-                top10_resident_lists = [top10_resident_percent_success, top10_resident_1stDraw_percent_success, top10_resident_2ndDraw_percent_success, top10_resident_3rdDraw_percent_success]
-                for top10_df in top10_resident_lists:
+                # Create a list of dataframes containing the top 10 largest percentages found
+                top_10_dfs_list = create_top_10_percent_success_dfs(filtered_df)
+
+                # Iterate over each DataFrame in top_10_dfs_list
+                for top10_df in top_10_dfs_list:
                     # Loop through each unique Hunt Code to generate pie charts for each row
                     for hunt_code in top10_df['Hunt Code'].unique():
                         # Filter rows with the current Hunt Code
@@ -79,29 +159,35 @@ def find_top_10_callbacks(app):
 
                         # Create a row for the pie charts for each of the percentage columns
                         pie_charts_for_this_hunt_code = []
-                        
-                        for _, row in top10_resident_df.iterrows():
-                            pie_charts_for_this_hunt_code.append(dcc.Graph(figure=create_pie_chart_with_raw_value(row, 'resident_percent_success', 'Overall Success')))
-                            pie_charts_for_this_hunt_code.append(dcc.Graph(figure=create_pie_chart_with_raw_value(row, 'resident_1stDraw_percent_success', '1st Draw Success')))
-                            pie_charts_for_this_hunt_code.append(dcc.Graph(figure=create_pie_chart_with_raw_value(row, 'resident_2ndDraw_percent_success', '2nd Draw Success')))
-                            pie_charts_for_this_hunt_code.append(dcc.Graph(figure=create_pie_chart_with_raw_value(row, 'resident_3rdDraw_percent_success', '3rd Draw Success')))
-                        
+
+                        # Loop through the success_dict list to get the new_columns dynamically
+                        for success_dict in success_dict_list:
+                            new_column = success_dict["new_column"]
+                            label = success_dict["new_column"].replace("_percent_success", " Success")  # Creating a label for the pie chart
+
+                            # Create a pie chart for this new column
+                            for _, row in top10_resident_df.iterrows():
+                                pie_charts_for_this_hunt_code.append(
+                                    dcc.Graph(figure=create_pie_chart_with_raw_value(row, new_column, label))
+                                )
+
                         # Add pie charts for the current hunt code to the list
                         pie_chart_components.append(html.Div(
                             children=pie_charts_for_this_hunt_code,
                             style={'display': 'flex', 'justify-content': 'space-evenly', 'margin-bottom': '20px'}
                         ))
 
-                    # making all of these classes default false becuse we want a more manageable dataframe
-                    residency_choice = Residency(False, False, False)
-                    choice_result = Choice(False, False, False, False, False)
-                    success_total = SuccessTotals(False, False, False)
-                    success_percentage = SuccessPercentages(False, False, False)
-                    percent_success = PercentSuccess(True, False, False, False, False, False)
+                # making all of these classes default false becuse we want a more manageable dataframe to view
+                residency_choice = Residency(False, False, False)
+                choice_result = Choice(False, False, False, False, False)
+                success_total = SuccessTotals(False, False, False)
+                success_percentage = SuccessPercentages(False, False, False)
+                percent_success = PercentSuccess(False, False, False, False, False, False)
 
-                    hunt_code_df = filter_on_boolean_switches(pd.concat(top10_resident_lists, ignore_index=True), residency_choice, choice_result, success_total, success_percentage, percent_success)
-                    hunt_code_df = drop_success(hunt_code_df)
-                    hunt_code_df = hunt_code_df.drop(columns=["Unit/Description"])
+                hunt_code_df = filter_on_boolean_switches(pd.concat(top_10_dfs_list, ignore_index=True), residency_choice, choice_result, success_total, success_percentage, percent_success)
+                hunt_code_df = drop_success(hunt_code_df)
+                hunt_code_df = hunt_code_df.drop(columns=["Unit/Description"])
+                print(hunt_code_df)
                 return pie_chart_components, dash_table.DataTable(data=hunt_code_df.to_dict('records'), page_size=10)
             except KeyError:
                 return [None, None]
