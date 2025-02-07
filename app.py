@@ -58,6 +58,17 @@ def on_page_load(n, existing_data):
     return existing_data  # Return existing data if n_intervals isn't 1
 
 
+# Callback to disable the interval after it runs once
+@app.callback(
+    Output('interval-component', 'disabled'),
+    Input('interval-component', 'n_intervals')
+)
+def disable_interval(n_intervals):
+    if n_intervals > 0:
+        return True  # Disable the interval after it runs once
+    return False  # Keep it enabled initially
+
+
 # Page layout for routing
 @app.callback(
     Output('page-content', 'children'),

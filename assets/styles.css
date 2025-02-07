@@ -163,3 +163,42 @@ h3 {
 .dcc-dropdown {
     width: 100%;
 }
+
+/* General styling for the pie chart container */
+.pie-chart-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+/* Optional: Add border and shadow to the pie chart */
+.pie-chart-container .dash-graph {
+    border: 2px solid #333;  /* Dark border */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);  /* Soft shadow */
+    border-radius: 10px;
+}
+
+/* Customize hover effects on pie chart slices */
+.pie-chart-container .pie-hover:hover {
+    opacity: 0.8;
+    cursor: pointer;
+}
+
+/* Optional: Style the percentage inside the pie slices */
+.pie-chart-container .pie-text {
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+}
+
+/* Adjust for mobile responsiveness */
+@media (max-width: 768px) {
+    .pie-chart-container {
+        padding: 10px;
+        justify-content: center;
+    }
+    .pie-chart-container .dash-graph {
+        width: 90%;
+    }
+}

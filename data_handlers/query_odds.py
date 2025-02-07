@@ -46,6 +46,12 @@ def drop_success(result_set):
         df_display = df_display.drop(columns=["resident_total_success"])
         df_display = df_display.drop(columns=["nonresident_total_success"])
         df_display = df_display.drop(columns=["outfitter_total_success"])
+    except KeyError:
+        pass
+    return df_display
+
+def drop_percent_success(result_set):
+    try:
         df_display = df_display.drop(columns=["resident_percent_success"])
         df_display = df_display.drop(columns=["resident_1stDraw_percent_success"])
         df_display = df_display.drop(columns=["resident_2ndDraw_percent_success"])
@@ -54,8 +60,7 @@ def drop_success(result_set):
         pass
     return df_display
 
-
-def filter_on_boolean_switches(filtered_list, residency_choice, choice_result, success_total, success_percentage):
+def filter_on_boolean_switches(filtered_list, residency_choice, choice_result, success_total, success_percentage, percent_success):
     df = pd.DataFrame(filtered_list)
     
     try:
@@ -100,16 +105,34 @@ def filter_on_boolean_switches(filtered_list, residency_choice, choice_result, s
     except KeyError:
         pass
     
+    try:
+        if not(percent_success.resident_percent_success):
+            df = df.drop(columns=["resident_percent_success"])
+        # if not(percent_success.non_resident_percent_success):
+        #     df = df.drop(columns=["non_resident_percent_success"])
+        # if not(percent_success.outfitter_percent_success):
+        #     df = df.drop(columns=["outfitter_percent_success"])
+        if not(percent_success.resident_percent_success_first_choice):
+            df = df.drop(columns=["resident_1stDraw_percent_success"])
+        if not(percent_success.resident_percent_success_second_choice):
+            df = df.drop(columns=["resident_2ndDraw_percent_success"])
+        if not(percent_success.resident_percent_success_third_choice):
+            df = df.drop(columns=["resident_3rdDraw_percent_success"])
+    except KeyError:
+        pass
+    
     return df.to_dict('records')
 
-def query_odds(odds_summary, unit_number, residency_choice, choice_result, success_total, success_percentage, add_private, add_youth,):
+
+def query_odds(odds_summary, unit_number, residency_choice, choice_result, success_total, success_percentage, percent_success, add_private, add_youth,):
     filtered_list = []
     filtered_list = GetListFromQuery.get_unit_by_number(odds_summary, unit_number)
+
     if not(add_private):
         filtered_list = GetListFromQuery.get_no_private(filtered_list)
     if not(add_youth):
         filtered_list = GetListFromQuery.get_no_youth(filtered_list)
-    filtered_list = filter_on_boolean_switches(filtered_list, residency_choice, choice_result, success_total, success_percentage)
+    filtered_list = filter_on_boolean_switches(filtered_list, residency_choice, choice_result, success_total, success_percentage, percent_success)
     return filtered_list
 
 def new_odds_summary_dict():
@@ -179,5 +202,14 @@ def parser_func(csv_filename):
 
 
 def get_df_for_pie_chart(df, new_column, total_column, factored_column):
-    df[new_column] = df[total_column] / df[factored_column] * 100
+    """
+    This function computes a new column for pie chart percentages. It handles cases where 
+    the total_column is 0 or None to avoid division errors.
+    """
+    # Check if total_column is 0 or None to avoid division by zero or invalid calculations
+    df[new_column] = df.apply(
+        lambda row: 0 if row[total_column] == 0 or row[total_column] is None else (row[total_column] / row[factored_column]) * 100,
+        axis=1
+    )
     return df
+
