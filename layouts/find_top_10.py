@@ -19,6 +19,14 @@ find_top_10_layout = html.Div([
                                 ], style={"width":"100%"}),
                             ])
 
+# making all of these classes default true becuse we want all the data
+residency_choice = Residency(True, True, True)
+choice_result = Choice(True, True, True, True, True)
+success_total = SuccessTotals(True, True, True)
+success_percentage = SuccessPercentages(True, True, True)
+add_private = True
+add_youth = True
+
 
 # Callbacks for finding the top 10 results of the draw
 def find_top_10_callbacks(app):
@@ -47,7 +55,53 @@ def find_top_10_callbacks(app):
         Input('proclamation_results', 'data'),
         Input(component_id='unit_number', component_property='value'),
         allow_duplicate=True)
-    def find_top_10_deer(proclamation_results):
+    def find_top_10_deer(proclamation_results, unit_number):
+        
+        csv_filename = '2024OddsSummary_Deer.csv'
+        odds_summary = parser_func("input/{}".format(csv_filename))
+        query_result = query_odds(odds_summary, unit_number, residency_choice, choice_result, success_total, success_percentage, add_private, add_youth,)
+        query_result_dict = {index: value for index, value in enumerate(query_result)}
+        query_result_df = pd.DataFrame(query_result)
+        proclamation_results_df = pd.DataFrame(proclamation_results)
+        try:
+            filtered_df = pd.merge(query_result_df, proclamation_results_df, on=['Hunt Code', 'Licenses', 'Bag'], how='inner')
+            # Create a list to store pie chart components (dcc.Graph)
+            pie_chart_components = []
+
+            # Calculate the percentage values before generating pie charts
+            filtered_df = get_df_for_pie_chart(filtered_df, 'resident_percent_success', 'Resident_successfull_draw_total', 'Total_resident')
+            filtered_df = get_df_for_pie_chart(filtered_df, 'resident_1stDraw_percent_success', 'resident_1st_success', '1st_resident')
+            filtered_df = get_df_for_pie_chart(filtered_df, 'resident_2ndDraw_percent_success', 'resident_2nd_success', '2nd_resident')
+            filtered_df = get_df_for_pie_chart(filtered_df, 'resident_3rdDraw_percent_success', 'resident_3rd_success', '3rd_resident')
+
+            top10_resident_percent_success = filtered_df.nlargest(10, 'resident_percent_success')
+            top10_resident_1stDraw_percent_success = filtered_df.nlargest(10, 'resident_1stDraw_percent_success')
+            top10_resident_2ndDraw_percent_success = filtered_df.nlargest(10, 'resident_2ndDraw_percent_success')
+            top10_resident_3rdDraw_percent_success = filtered_df.nlargest(10, 'resident_3rdDraw_percent_success')
+            top10_resident_lists = [top10_resident_percent_success, top10_resident_1stDraw_percent_success, top10_resident_2ndDraw_percent_success, top10_resident_3rdDraw_percent_success]
+            for top10_df in top10_resident_lists:
+                # Loop through each unique Hunt Code to generate pie charts for each row
+                for hunt_code in top10_df['Hunt Code'].unique():
+                    # Filter rows with the current Hunt Code
+                    top10_resident_df = top10_df[top10_df['Hunt Code'] == hunt_code]
+
+                    # Create a row for the pie charts for each of the percentage columns
+                    pie_charts_for_this_hunt_code = []
+                    
+                    for _, row in top10_resident_df.iterrows():
+                        pie_charts_for_this_hunt_code.append(dcc.Graph(figure=create_pie_chart(row, 'resident_percent_success', 'Overall Success')))
+                        pie_charts_for_this_hunt_code.append(dcc.Graph(figure=create_pie_chart(row, 'resident_1stDraw_percent_success', '1st Draw Success')))
+                        pie_charts_for_this_hunt_code.append(dcc.Graph(figure=create_pie_chart(row, 'resident_2ndDraw_percent_success', '2nd Draw Success')))
+                        pie_charts_for_this_hunt_code.append(dcc.Graph(figure=create_pie_chart(row, 'resident_3rdDraw_percent_success', '3rd Draw Success')))
+                    
+                    # Add pie charts for the current hunt code to the list
+                    pie_chart_components.append(html.Div(
+                        children=pie_charts_for_this_hunt_code,
+                        style={'display': 'flex', 'justify-content': 'space-evenly', 'margin-bottom': '20px'}
+                    ))
+
+        except KeyError:
+            return []
         return []
     
     @app.callback(

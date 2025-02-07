@@ -6,7 +6,7 @@ from models import Residency, SuccessPercentages, SuccessTotals, Choice, Bag
 
 home_layout = html.Div([
                         html.Div([
-                            html.H2("Find your draw odd results"),
+                            html.H2("Find your draw odd results by clicking the map unit or using the applications from the navigation bar"),
                         ]),
                         html.Td([html.Td([html.Img(src=encoded_image, style={'width': '100%'})])]),
                     ])
