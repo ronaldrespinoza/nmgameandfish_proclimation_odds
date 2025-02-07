@@ -110,7 +110,7 @@ def filtering_table_callbacks(app):
         choice_result = Choice(show_results_for_1stchoice, show_results_for_2ndchoice, show_results_for_3rdchoice, show_results_for_4thchoice, show_results_for_totals)
         success_total = SuccessTotals(show_resident_successfull_draw_total, show_nonresident_successfull_draw_total, show_outfitter_successfull_draw_total)
         success_percentage = SuccessPercentages(show_resident_successfull_draw_percentage, show_nonresident_successfull_draw_percentage, show_outfitter_successfull_draw_percentage)
-        percent_success = PercentSuccess(False, False, False, False, False, False)
+        percent_success = PercentSuccess(True, False, False, False, True, False, False, False, True, False, False, False)
 
         if animal_choice_deer:
             csv_filename = '2024OddsSummary_Deer.csv'
@@ -203,7 +203,7 @@ def filtering_table_callbacks(app):
                 choice_result = Choice(show_results_for_1stchoice, show_results_for_2ndchoice, show_results_for_3rdchoice, show_results_for_4thchoice, show_results_for_totals)
                 success_total = SuccessTotals(show_resident_successfull_draw_total, show_nonresident_successfull_draw_total, show_outfitter_successfull_draw_total)
                 success_percentage = SuccessPercentages(show_resident_successfull_draw_percentage, show_nonresident_successfull_draw_percentage, show_outfitter_successfull_draw_percentage)
-                percent_success = PercentSuccess(False, False, False, False, False, False)
+                percent_success = PercentSuccess(True, False, False, False, True, False, False, False, True, False, False, False)
 
                 hunt_code_df = filter_on_boolean_switches(filtered_df, residency_choice, choice_result, success_total, success_percentage, percent_success)
                 hunt_code_df = drop_success(hunt_code_df)

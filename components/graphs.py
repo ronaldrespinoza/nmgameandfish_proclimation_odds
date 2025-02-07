@@ -76,7 +76,7 @@ def create_pie_chart_with_raw_value(row, percent_column, label):
         normalized_value = raw_value / max(100, raw_value)  # Normalize but let values over 100% still appear correctly
         
         fig = go.Figure(data=[go.Pie(
-            labels=[label, 'Other'],
+            labels=[label, 'Failure'],
             values=[normalized_value, 1 - normalized_value],  # Always sum to 100% visually
             hole=0.3,  # Donut chart (optional)
             textinfo='label+percent',  # labels and percentages

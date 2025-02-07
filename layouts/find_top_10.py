@@ -14,7 +14,7 @@ find_top_10_layout = html.Div([
                 id='top10_result_info_table',
                 columns=[],  # Columns will be populated dynamically
                 data=[],  # Initially empty data
-                row_selectable='single',  # Allow row selection
+                row_selectable='multi',  # Allow row selection
                 selected_rows=[],  # Default no rows selected
                 sort_action='native',  # Enable native sorting on columns
                 sort_by=[],  # Default no sorting
@@ -146,52 +146,73 @@ def find_top_10_callbacks(app):
     @app.callback(
         Output('top10-pie-chart-container', 'children'),
         [Input('top10_result_info_table', 'selected_rows'),
-        Input('proclamation_results', 'data')]
+        Input('top10_result_info_table', 'data')]
     )
-    def generate_pie_charts_on_row_click(selected_rows, proclamation_results):
+    def generate_pie_charts_on_row_click(selected_rows, table_data):
         # If no row is selected, do nothing
         if not selected_rows:
-            return html.Div("Please select a Hunt Code from the table.")
-
-        # Get the selected row's Hunt Code
-        selected_row = selected_rows[0]  # Assumes only one row can be selected at a time
-        selected_hunt_code = proclamation_results[selected_row]['Hunt Code']  # Retrieve Hunt Code from the selected row
+            return html.Div("Please select one or more Hunt Codes from the table.")
         
-        # Convert proclamation results to DataFrame
-        proclamation_results_df = pd.DataFrame(proclamation_results)
-        
-        # Filter the DataFrame by the selected hunt code
-        filtered_df = proclamation_results_df[proclamation_results_df['Hunt Code'] == selected_hunt_code]
+        # Convert table data to DataFrame
+        df = pd.DataFrame(table_data)
 
-        if filtered_df.empty:
-            return html.Div(f"No data available for Hunt Code {selected_hunt_code}.")
+        pie_charts_for_selected_rows = []
 
-        # Create success_dict list
-        success_dict_list = create_all_percent_success()
+        # Loop through each selected row index
+        for selected_row in selected_rows:
+            selected_row_index = selected_row  # Assuming it's 0-indexed, adjust if needed
+            selected_hunt_code = df.iloc[selected_row_index]['Hunt Code']  # Retrieve Hunt Code
 
-        # Apply percentage calculations
-        filtered_df = apply_all_percent_success_to_df(filtered_df)
+            # Filter the DataFrame by the selected hunt code
+            filtered_df = df[df['Hunt Code'] == selected_hunt_code]
 
-        pie_charts_for_this_hunt_code = []
+            if filtered_df.empty:
+                pie_charts_for_selected_rows.append(html.Div(f"No data available for Hunt Code {selected_hunt_code}."))
+                continue
 
-        # Loop through the success_dict list to dynamically generate pie charts
-        for success_dict in success_dict_list:
-            new_column = success_dict["new_column"]
-            label = success_dict["new_column"].replace("_percent_success", " Success")  # Creating a label for the pie chart
+            pie_charts_for_this_hunt_code = []
 
-            # Loop through the rows to create pie charts
-            for _, row in filtered_df.iterrows():
-                pie_charts_for_this_hunt_code.append(
-                    dcc.Graph(figure=create_pie_chart_with_raw_value(row, new_column, label))
+            # List of percent success columns to generate pie charts
+            percent_success_columns = [
+                'resident_percent_success', 'resident_1stDraw_percent_success', 'resident_2ndDraw_percent_success', 'resident_3rdDraw_percent_success',
+                'nonresident_percent_success', 'nonresident_1stDraw_percent_success', 'nonresident_2ndDraw_percent_success', 'nonresident_3rdDraw_percent_success',
+                'outfitter_percent_success', 'outfitter_1stDraw_percent_success', 'outfitter_2ndDraw_percent_success', 'outfitter_3rdDraw_percent_success',
+            ]
+            
+            # Loop through the percent success columns to dynamically generate pie charts
+            for column in percent_success_columns:
+                if column in filtered_df.columns:
+                    # Create the label as Success
+                    label = column.replace("_percent_success", " Success")  # Label for Success
+                    
+                    # Loop through the rows to create pie charts for each percent success column
+                    for _, row in filtered_df.iterrows():
+                        success_value = row[column]
+
+                        # Create pie chart with Success
+                        pie_charts_for_this_hunt_code.append(
+                            dcc.Graph(
+                                figure=create_pie_chart_with_raw_value(
+                                    row, column, label
+                                )
+                            )
+                        )
+
+            if pie_charts_for_this_hunt_code:
+                pie_charts_for_selected_rows.append(
+                    html.Div(
+                        children=pie_charts_for_this_hunt_code,
+                        style={'display': 'flex', 'justify-content': 'space-evenly', 'margin-bottom': '20px'}
+                    )
                 )
+            else:
+                pie_charts_for_selected_rows.append(html.Div(f"No pie charts available for Hunt Code {selected_hunt_code}."))
 
-        if not pie_charts_for_this_hunt_code:
-            return html.Div(f"No pie charts available for Hunt Code {selected_hunt_code}.")
-        
-        return html.Div(
-            children=pie_charts_for_this_hunt_code,
-            style={'display': 'flex', 'justify-content': 'space-evenly', 'margin-bottom': '20px'}
-        )
+        # Return all pie charts for the selected rows
+        return html.Div(children=pie_charts_for_selected_rows)
+
+
+
 
 
     @app.callback(
