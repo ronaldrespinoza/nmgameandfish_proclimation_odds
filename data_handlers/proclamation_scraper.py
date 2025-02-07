@@ -81,7 +81,7 @@ def scrape_pdf_page_range(pdf_path, start_page, end_page):
     return full_text
 
 def scrape_for_deer():
-    pdf_path = ".//input//HNT RIB 2025-26_ENGLISH_Online.pdf"
+    pdf_path = ".//input//proclamations//HNT RIB 2025-26_ENGLISH_Online.pdf"
     animal_choice = 'deer'
     deer_start_page = 55
     deer_end_page = 68
@@ -89,7 +89,7 @@ def scrape_for_deer():
     return parse_hunting_data(scraped_text, animal_choice)
 
 def scrape_for_elk():
-    pdf_path = ".//input//HNT RIB 2025-26_ENGLISH_Online.pdf"
+    pdf_path = ".//input//proclamations//HNT RIB 2025-26_ENGLISH_Online.pdf"
     animal_choice = 'elk'
     elk_start_page = 75
     elk_end_page = 95

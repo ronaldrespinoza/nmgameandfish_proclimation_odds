@@ -52,7 +52,7 @@ def find_top_10_callbacks(app):
     def find_top_10_deer(proclamation_results, search_top_10_deer, unit_number):
         if search_top_10_deer:
             csv_filename = '2024OddsSummary_Deer.csv'
-            odds_summary = parser_func("input/{}".format(csv_filename))
+            odds_summary = parser_func("input//odds_reports//{}".format(csv_filename))
             query_result_df = pd.DataFrame(odds_summary)
             proclamation_results_df = pd.DataFrame(proclamation_results)
             try:

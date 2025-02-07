@@ -119,7 +119,7 @@ def filtering_table_callbacks(app):
         elif csv_filename == "":
             return "", {"": ""}
 
-        odds_summary = parser_func("input//{}".format(csv_filename))
+        odds_summary = parser_func("input//odds_reports//{}".format(csv_filename))
         if unit_number is None:
             return "you must choose a unit number", {"": ""}
         else:
