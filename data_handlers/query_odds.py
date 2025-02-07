@@ -66,7 +66,7 @@ def filter_on_boolean_switches(filtered_list, residency_choice, choice_result, s
     try:
         if not(residency_choice.resident):
             df = df.drop(columns=["1st_resident", "2nd_resident", "3rd_resident", "Total_resident"])
-        if not(residency_choice.non_resident):
+        if not(residency_choice.nonresident):
             df = df.drop(columns=["1st_nonresident", "2nd_nonresident", "3rd_nonresident", "Total_nonresident"])
         if not(residency_choice.outfitter):
             df = df.drop(columns=["1st_outfitter", "2nd_outfitter", "3rd_outfitter", "Total_outfitter"])
@@ -88,7 +88,7 @@ def filter_on_boolean_switches(filtered_list, residency_choice, choice_result, s
     try:
         if not(success_total.resident_total):
             df = df.drop(columns=["Resident_successfull_draw_total"])
-        if not(success_total.non_resident_total):
+        if not(success_total.nonresident_total):
             df = df.drop(columns=["Nonresident_successfull_draw_total"])
         if not(success_total.outfitter_total):
             df = df.drop(columns=["Outfitter_successfull_draw_total"])
@@ -98,7 +98,7 @@ def filter_on_boolean_switches(filtered_list, residency_choice, choice_result, s
     try:
         if not(success_percentage.resident_percentages):
             df = df.drop(columns=["Resident_percentage_allocation"])
-        if not(success_percentage.non_resident_percentages):
+        if not(success_percentage.nonresident_percentages):
             df = df.drop(columns=["nonresident_percentage_allocation"])
         if not(success_percentage.outfitter_percentages):
             df = df.drop(columns=["outfitter_percentage_allocation"])
@@ -108,16 +108,30 @@ def filter_on_boolean_switches(filtered_list, residency_choice, choice_result, s
     try:
         if not(percent_success.resident_percent_success):
             df = df.drop(columns=["resident_percent_success"])
-        # if not(percent_success.non_resident_percent_success):
-        #     df = df.drop(columns=["non_resident_percent_success"])
-        # if not(percent_success.outfitter_percent_success):
-        #     df = df.drop(columns=["outfitter_percent_success"])
         if not(percent_success.resident_percent_success_first_choice):
             df = df.drop(columns=["resident_1stDraw_percent_success"])
         if not(percent_success.resident_percent_success_second_choice):
             df = df.drop(columns=["resident_2ndDraw_percent_success"])
         if not(percent_success.resident_percent_success_third_choice):
             df = df.drop(columns=["resident_3rdDraw_percent_success"])
+
+        if not(percent_success.nonresident_percent_success):
+            df = df.drop(columns=["nonresident_percent_success"])
+        if not(percent_success.nonresident_percent_success_first_choice):
+            df = df.drop(columns=["nonresident_1stDraw_percent_success"])
+        if not(percent_success.nonresident_percent_success_second_choice):
+            df = df.drop(columns=["nonresident_2ndDraw_percent_success"])
+        if not(percent_success.nonresident_percent_success_third_choice):
+            df = df.drop(columns=["nonresident_3rdDraw_percent_success"])
+
+        if not(percent_success.outfitter_percent_success):
+            df = df.drop(columns=["outfitter_percent_success"])
+        if not(percent_success.outfitter_percent_success_first_choice):
+            df = df.drop(columns=["outfitter_1stDraw_percent_success"])
+        if not(percent_success.outfitter_percent_success_second_choice):
+            df = df.drop(columns=["outfitter_2ndDraw_percent_success"])
+        if not(percent_success.outfitter_percent_success_third_choice):
+            df = df.drop(columns=["outfitter_3rdDraw_percent_success"])
     except KeyError:
         pass
     

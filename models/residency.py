@@ -3,5 +3,5 @@ from dataclasses import dataclass
 @dataclass
 class Residency:
     resident: bool
-    non_resident: bool
+    nonresident: bool
     outfitter: bool
