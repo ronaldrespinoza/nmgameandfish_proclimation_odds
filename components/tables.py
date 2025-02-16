@@ -29,7 +29,7 @@ def create_choice_table():
         html.Td([dcc.Dropdown(
             id='top10_unit_numbers',
             options=[{'label': str(i), 'value': i} for i in range(1, 21)],  # Example range of units (1-20)
-            multi=True,  # Enable multi-selection
+            multi=False,  # Enable multi-selection
             placeholder="Select units...",
             style={"width": "100%"}
         )], colSpan=2, style={"padding-top": "15px", "padding-bottom": "15px", "width": "100%"}), 
@@ -37,8 +37,22 @@ def create_choice_table():
         html.Td([available_weapon_dropdown()], style={"padding-top": "15px", "padding-bottom": "15px", "width": "100%"}), 
     ]) 
 
+    row4 = html.Tr([ 
+        html.Td("Get top 10 odds based on Unit Group", style={"padding-right": "15px", "padding-left": "15px", "padding-top": "10px", "padding-bottom": "10px", "width": "100%"}), 
+        html.Td([dcc.Dropdown(
+            id='top10_unit_numbers_group',
+            options=[{'label': str(i), 'value': i} for i in range(1, 21)],  # Example range of units (1-20)
+            multi=True,  # Enable multi-selection
+            placeholder="Select units...",
+            style={"width": "100%"}
+        )], colSpan=2, style={"padding-top": "15px", "padding-bottom": "15px", "width": "100%"}), 
+        html.Td([dbc.Button('Search', id='search_top_10_unit_group', n_clicks=0, color="info", size="sm", className="shadow-btn")], 
+                style={"padding-right": "15px", "padding-left": "15px", "padding-top": "10px", "padding-bottom": "10px", "width": "100%"}), 
+        html.Td([]), 
+    ]) 
+
     # Define table body
-    table_body = html.Tbody([row1, row2]), html.Tbody([row3]), html.Tbody([html.Tr([])])
+    table_body = html.Tbody([row1, row2]), html.Tbody([row3]), html.Tbody([row4]), html.Tbody([html.Tr([])])
 
     # Wrap the table in a div with the responsive class for mobile-friendliness
     table = html.Div( 

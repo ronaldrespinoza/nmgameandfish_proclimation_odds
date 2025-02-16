@@ -213,15 +213,73 @@ def find_top_10_callbacks(app):
         return html.Div(children=pie_charts_for_selected_rows)
 
 
+    # @app.callback(
+    #     [Output('top10_result_info_table', 'columns'),
+    #     Output('top10_result_info_table', 'data')],
+    #     [Input('proclamation_results', 'data'),
+    #     Input('search_top_10_deer', 'n_clicks'),
+    #     Input('top10_unit_numbers', 'value')],
+    #     prevent_initial_call=True
+    # )
+    # def find_top_10_deer(proclamation_results, search_top_10_deer, unit_number):
+    #     # Only proceed if the button is clicked and the data is not None
+    #     if search_top_10_deer and proclamation_results is not None:
+    #         try:
+    #             query_result_df = get_odds_summary()  # This function should return the odds summary for the units
+    #             proclamation_results_df = pd.DataFrame(proclamation_results)
+
+    #             # Merge the dataframes based on 'Hunt Code', 'Licenses', 'Bag'
+    #             filtered_df = pd.merge(query_result_df, proclamation_results_df, on=['Hunt Code', 'Licenses', 'Bag'], how='inner')
+
+    #             # Check for duplicates after merge and remove them
+    #             filtered_df = filtered_df.drop_duplicates(subset=['Hunt Code', 'Licenses', 'Bag'])
+    #             filtered_df = apply_all_percent_success_to_df(filtered_df)
+
+    #             # If unit_number is selected, filter the DataFrame based on the selected units
+    #             if unit_number:
+    #                 # Split the strings in the unit_number list and extract the unit number part (e.g., '2A' from 'Unit 2A')
+    #                 selected_units = [unit.split(' ')[1] for unit in unit_number]
+
+    #                 # Filter the dataframe by checking if 'Unit' contains any of the selected units
+    #                 filtered_df = filtered_df[filtered_df['Unit'].apply(lambda x: any(unit in x for unit in selected_units))]
+
+    #             # Create a list of dataframes containing the top 10 largest percentages found
+    #             top_10_dfs_list = create_top_10_percent_success_dfs(filtered_df)
+
+    #             # Apply necessary filters to the dataframe
+    #             residency_choice = Residency(False, False, False)
+    #             choice_result = Choice(False, False, False, False, False)
+    #             success_total = SuccessTotals(False, False, False)
+    #             success_percentage = SuccessPercentages(False, False, False)
+    #             percent_success = PercentSuccess(True, False, False, False, True, False, False, False, True, False, False, False)
+
+    #             hunt_code_df = filter_on_boolean_switches(top_10_dfs_list, residency_choice, choice_result, success_total, success_percentage, percent_success)
+    #             hunt_code_df = drop_success(hunt_code_df)
+    #             hunt_code_df = hunt_code_df.drop(columns=["Unit/Description"])
+
+    #             # Dynamically generate columns from the DataFrame
+    #             columns = [{"name": col, "id": col} for col in hunt_code_df.columns]
+
+    #             # Return columns and data to be displayed in the DataTable
+    #             return columns, hunt_code_df.to_dict('records')
+
+    #         except Exception as e:
+    #             print(f"Error: {e}")
+    #             return [], []  # Return empty columns and data in case of error
+
+    #     # Return empty columns and data if the search button isn't clicked or data is invalid
+    #     return [], []
+
+
     @app.callback(
         [Output('top10_result_info_table', 'columns'),
         Output('top10_result_info_table', 'data')],
         [Input('proclamation_results', 'data'),
-        Input('search_top_10_deer', 'n_clicks'),
-        Input('top10_unit_numbers', 'value')],
+        Input('search_top_10_unit_group', 'n_clicks'),
+        Input('top10_unit_numbers_group', 'value')],
         prevent_initial_call=True
     )
-    def find_top_10_deer(proclamation_results, search_top_10_deer, unit_number):
+    def find_top_10_deer(proclamation_results, search_top_10_deer, unit_number_group):
         # Only proceed if the button is clicked and the data is not None
         if search_top_10_deer and proclamation_results is not None:
             try:
@@ -236,12 +294,13 @@ def find_top_10_callbacks(app):
                 filtered_df = apply_all_percent_success_to_df(filtered_df)
 
                 # If unit_number is selected, filter the DataFrame based on the selected units
-                if unit_number:
-                    # Split the strings in the unit_number list and extract the unit number part (e.g., '2A' from 'Unit 2A')
-                    selected_units = [unit.split(' ')[1] for unit in unit_number]
+                for unit_number in unit_number_group:
+                    if unit_number:
+                        # Split the strings in the unit_number list and extract the unit number part (e.g., '2A' from 'Unit 2A')
+                        selected_units = [unit.split(' ')[1] for unit in unit_number]
 
-                    # Filter the dataframe by checking if 'Unit' contains any of the selected units
-                    filtered_df = filtered_df[filtered_df['Unit'].apply(lambda x: any(unit in x for unit in selected_units))]
+                        # Filter the dataframe by checking if 'Unit' contains any of the selected units
+                        filtered_df = filtered_df[filtered_df['Unit'].apply(lambda x: any(unit in x for unit in selected_units))]
 
                 # Create a list of dataframes containing the top 10 largest percentages found
                 top_10_dfs_list = create_top_10_percent_success_dfs(filtered_df)
@@ -269,9 +328,6 @@ def find_top_10_callbacks(app):
 
         # Return empty columns and data if the search button isn't clicked or data is invalid
         return [], []
-
-
-
 
 
 
