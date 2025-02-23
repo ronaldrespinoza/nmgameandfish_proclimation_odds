@@ -39,16 +39,32 @@ def create_choice_table():
 
     row4 = html.Tr([ 
         html.Td("Get top 10 odds based on Unit Group", style={"padding-right": "15px", "padding-left": "15px", "padding-top": "10px", "padding-bottom": "10px", "width": "100%"}), 
+        html.Td([html.Td("Deer"),
+                    html.Td([
+                        daq.BooleanSwitch(
+                            id='animal_choice_deer_unit_group',
+                            on=True,
+                        ),
+                        html.Button(id='deer_unit_group_button',n_clicks=0,style={'display': 'none'})
+                        ]),
+                    html.Td("Elk"),
+                    html.Td([
+                        daq.BooleanSwitch(
+                            id='animal_choice_elk_unit_group',
+                            on=False,
+                        ),
+                        html.Button(id='elk_unit_group_button',n_clicks=0,style={'display': 'none'})
+                        ])
+                ]),
         html.Td([dcc.Dropdown(
             id='top10_unit_numbers_group',
             options=[{'label': str(i), 'value': i} for i in range(1, 21)],  # Example range of units (1-20)
             multi=True,  # Enable multi-selection
             placeholder="Select units...",
             style={"width": "100%"}
-        )], colSpan=2, style={"padding-top": "15px", "padding-bottom": "15px", "width": "100%"}), 
+        )], colSpan=1, style={"padding-top": "15px", "padding-bottom": "15px", "width": "100%"}), 
         html.Td([dbc.Button('Search', id='search_top_10_unit_group', n_clicks=0, color="info", size="sm", className="shadow-btn")], 
                 style={"padding-right": "15px", "padding-left": "15px", "padding-top": "10px", "padding-bottom": "10px", "width": "100%"}), 
-        html.Td([]), 
     ]) 
 
     # Define table body

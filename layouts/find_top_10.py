@@ -30,9 +30,13 @@ find_top_10_layout = html.Div([
 
 
 
-def get_odds_summary():
-    csv_filename = '2024OddsSummary_Deer.csv'
-    odds_summary = parser_func("input//odds_reports//{}".format(csv_filename))
+def get_odds_summary(animal_choice_deer=True, animal_choice_elk=False):
+    if animal_choice_deer:
+        csv_filename = '2024OddsSummary_Deer.csv'
+        odds_summary = parser_func("input//odds_reports//{}".format(csv_filename))
+    elif animal_choice_elk:
+        csv_filename = '2024OddsSummary_Elk.csv'
+        odds_summary = parser_func("input//odds_reports//{}".format(csv_filename))
     return pd.DataFrame(odds_summary)
 
 
@@ -133,7 +137,29 @@ def find_top_10_callbacks(app):
     def top10_unit_dropdown(proclamation_results):
         return Bag.get_unit_dropdown_from_bag(Bag, 'deer')
 
-
+    @app.callback(
+        [Output('top10_unit_numbers_group', component_property='options'),
+        Output('deer_unit_group_button', component_property='n_clicks'),
+        Output('elk_unit_group_button',  component_property='n_clicks'),
+        Output(component_id='animal_choice_deer_unit_group', component_property='on'),
+        Output(component_id='animal_choice_elk_unit_group', component_property='on')],
+        [Input(component_id='animal_choice_deer_unit_group', component_property='on'),
+        Input(component_id='deer_unit_group_button', component_property='n_clicks'),
+        Input(component_id='animal_choice_elk_unit_group', component_property='on'),
+        Input(component_id='elk_unit_group_button', component_property='n_clicks')]
+    )
+    def ensure_only_one_on(animal_choice_deer, n_clicks_deer, animal_choice_elk, n_clicks_elk):
+        if animal_choice_deer and not(n_clicks_deer) and n_clicks_elk:
+            return Bag.get_unit_dropdown_from_bag(Bag, 'deer'), 1,0, True, False
+        elif animal_choice_elk and not(n_clicks_elk) and n_clicks_deer:
+            return Bag.get_unit_dropdown_from_bag(Bag, 'elk'), 0,1,False, True
+        elif animal_choice_deer and not(n_clicks_deer) and not(n_clicks_elk):
+            return Bag.get_unit_dropdown_from_bag(Bag, 'deer'), 1,0, True, False
+        elif animal_choice_elk and not(n_clicks_elk) and not(n_clicks_deer):
+            return Bag.get_unit_dropdown_from_bag(Bag, 'elk'), 0,1, False, True
+        else:
+            return {},0,0,False,False
+        
     # @app.callback(
     #     Output("top_10_results", "data"), 
     #     Input('top_10_results_deer', 'data'),
@@ -274,18 +300,20 @@ def find_top_10_callbacks(app):
     @app.callback(
         [Output('top10_result_info_table', 'columns'),
         Output('top10_result_info_table', 'data')],
-        [Input('proclamation_results', 'data'),
+        [Input(component_id='animal_choice_deer_unit_group', component_property='on'),
+        Input(component_id='animal_choice_elk_unit_group', component_property='on'),
+        Input('proclamation_results', 'data'),
         Input('search_top_10_unit_group', 'n_clicks'),
         Input('top10_unit_numbers_group', 'value')],
         prevent_initial_call=True
     )
-    def find_top_10_deer(proclamation_results, search_top_10_deer, unit_number_group):
+    def find_top_10_unit_group(animal_choice_deer, animal_choice_elk, proclamation_results, search_top_10_unit_group, unit_number_group):
         # Only proceed if the button is clicked and the data is not None
-        if search_top_10_deer and proclamation_results is not None:
+        if search_top_10_unit_group and proclamation_results is not None:
             try:
-                query_result_df = get_odds_summary()  # This function should return the odds summary for the units
+                query_result_df = get_odds_summary(animal_choice_deer, animal_choice_elk)  # This function should return the odds summary for the units
                 proclamation_results_df = pd.DataFrame(proclamation_results)
-
+                print(proclamation_results_df)
                 # Merge the dataframes based on 'Hunt Code', 'Licenses', 'Bag'
                 filtered_df = pd.merge(query_result_df, proclamation_results_df, on=['Hunt Code', 'Licenses', 'Bag'], how='inner')
 
@@ -294,17 +322,17 @@ def find_top_10_callbacks(app):
                 filtered_df = apply_all_percent_success_to_df(filtered_df)
 
                 # If unit_number is selected, filter the DataFrame based on the selected units
-                for unit_number in unit_number_group:
-                    if unit_number:
-                        # Split the strings in the unit_number list and extract the unit number part (e.g., '2A' from 'Unit 2A')
-                        selected_units = [unit.split(' ')[1] for unit in unit_number]
+                if unit_number_group:
+                    print([unit.split(' ')[1] for unit in unit_number_group])
+                    # Split the strings in the unit_number list and extract the unit number part (e.g., '2A' from 'Unit 2A')
+                    selected_units = [unit.split(' ')[1] for unit in unit_number_group]
 
-                        # Filter the dataframe by checking if 'Unit' contains any of the selected units
-                        filtered_df = filtered_df[filtered_df['Unit'].apply(lambda x: any(unit in x for unit in selected_units))]
+                    # Filter the dataframe by checking if 'Unit' contains any of the selected units
+                    filtered_df = filtered_df[filtered_df['Unit'].apply(lambda x: any(unit in x for unit in selected_units))]
 
                 # Create a list of dataframes containing the top 10 largest percentages found
                 top_10_dfs_list = create_top_10_percent_success_dfs(filtered_df)
-
+                # top_10_dfs_list = get_top_10_percent_success(top_10_dfs_list, 'resident_percent_success')
                 # Apply necessary filters to the dataframe
                 residency_choice = Residency(False, False, False)
                 choice_result = Choice(False, False, False, False, False)
