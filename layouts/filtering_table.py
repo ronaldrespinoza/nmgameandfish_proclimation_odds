@@ -1,7 +1,7 @@
 from dash import dcc, html, Input, Output,callback, dash_table
 import pandas as pd
 from components import unit_dropdown, bag_dropdown, hunt_code_dropdown, create_pie_chart_with_raw_value, encoded_image, create_filtering_table
-from data_handlers.query_odds import parser_func, query_odds, drop_success, filter_on_boolean_switches, get_df_for_pie_chart
+from data_handlers.query_odds import parser_func, query_odds, drop_success, drop_l123tdttdta, filter_on_boolean_switches, get_df_for_pie_chart
 from models import Residency, SuccessPercentages, PercentSuccess, SuccessTotals, Choice, Bag
 
 
@@ -21,11 +21,10 @@ filtering_table_layout = html.Div([
                                         html.H2("Resident Success Rates by Hunt Code"),
                                         html.Div(id='pie-chart-container')  # This will hold the dynamically generated pie charts
                                     ]),
-                                        html.Td([html.Td("GMU Map"),
-                                                    html.Td([html.Img(src=encoded_image, style={'width': '100%'})])
-                                            ]),
+                                    #     html.Td([html.Td("GMU Map"),
+                                    #                 html.Td([html.Img(src=encoded_image, style={'width': '100%'})])
+                                    #         ]),
                                     html.Div(id='output'),
-                                    dcc.Link('Go to Page find_top_10', href='/find_top_10')  # Link to Page 2
                                 ])
 
 
@@ -179,25 +178,44 @@ def filtering_table_callbacks(app):
                 # Create a list to store pie chart components (dcc.Graph)
                 pie_chart_components = []
 
+                #removed rows if not hunt type muzzle or any legal
+                # valid_values = ["Muzzle", "Muzzle – NM", "Any Legal", "Any Legal -"]
+                # filtered_df = filtered_df[filtered_df['Hunt Type'].isin(valid_values)]
+
                 # Loop through each unique Hunt Code to generate pie charts for each row
                 for hunt_code in filtered_df['Hunt Code'].unique():
                     # Filter rows with the current Hunt Code
                     hunt_code_df = filtered_df[filtered_df['Hunt Code'] == hunt_code]
 
                     # Create a row for the pie charts for each of the percentage columns
-                    pie_charts_for_this_hunt_code = []
-                    
+                    pie_charts_for_this_hunt_code_row_1 = []  # Row 1 for "Overall Success"
+                    pie_charts_for_this_hunt_code_row_2 = []  # Row 2 for "1st, 2nd, and 3rd Draw Success"
+
                     for _, row in hunt_code_df.iterrows():
-                        pie_charts_for_this_hunt_code.append(dcc.Graph(figure=create_pie_chart_with_raw_value(row, 'resident_percent_success', 'Overall Success')))
-                        pie_charts_for_this_hunt_code.append(dcc.Graph(figure=create_pie_chart_with_raw_value(row, 'resident_1stDraw_percent_success', '1st Draw Success')))
-                        pie_charts_for_this_hunt_code.append(dcc.Graph(figure=create_pie_chart_with_raw_value(row, 'resident_2ndDraw_percent_success', '2nd Draw Success')))
-                        pie_charts_for_this_hunt_code.append(dcc.Graph(figure=create_pie_chart_with_raw_value(row, 'resident_3rdDraw_percent_success', '3rd Draw Success')))
-                    
-                    # Add pie charts for the current hunt code to the list
+                        # First row: "Overall Success" pie chart
+                        pie_charts_for_this_hunt_code_row_1.append(dcc.Graph(figure=create_pie_chart_with_raw_value(row, 'resident_percent_success', 'Overall Success')))
+
+                        # Second row: "1st Draw", "2nd Draw", "3rd Draw" pie charts
+                        pie_charts_for_this_hunt_code_row_1.append(dcc.Graph(figure=create_pie_chart_with_raw_value(row, 'resident_1stDraw_percent_success', '1st Draw Success')))
+                        pie_charts_for_this_hunt_code_row_2.append(dcc.Graph(figure=create_pie_chart_with_raw_value(row, 'resident_2ndDraw_percent_success', '2nd Draw Success')))
+                        pie_charts_for_this_hunt_code_row_2.append(dcc.Graph(figure=create_pie_chart_with_raw_value(row, 'resident_3rdDraw_percent_success', '3rd Draw Success')))
+
+                    # Add pie charts for the current hunt code to the list, split into two rows
                     pie_chart_components.append(html.Div(
-                        children=pie_charts_for_this_hunt_code,
-                        style={'display': 'flex', 'justify-content': 'space-evenly', 'margin-bottom': '20px'}
-                    ))    
+                        children=[
+                            # First row (Overall Success)
+                            html.Div(
+                                children=pie_charts_for_this_hunt_code_row_1,
+                                style={'display': 'flex', 'justify-content': 'center', 'margin-bottom': '10px'}
+                            ),
+                            # Second row (1st, 2nd, and 3rd Draw Success)
+                            html.Div(
+                                children=pie_charts_for_this_hunt_code_row_2,
+                                style={'display': 'flex', 'justify-content': 'center', 'margin-bottom': '20px'}
+                            )
+                        ],
+                        style={'display': 'flex', 'flex-direction': 'column', 'align-items': 'center'}
+                    ))
                 
                 residency_choice = Residency(show_results_for_resident, show_results_for_nonresident, show_results_for_outfitter)
                 choice_result = Choice(show_results_for_1stchoice, show_results_for_2ndchoice, show_results_for_3rdchoice, show_results_for_4thchoice, show_results_for_totals)
@@ -207,6 +225,7 @@ def filtering_table_callbacks(app):
 
                 hunt_code_df = filter_on_boolean_switches(filtered_df, residency_choice, choice_result, success_total, success_percentage, percent_success)
                 hunt_code_df = drop_success(hunt_code_df)
+                hunt_code_df = drop_l123tdttdta(hunt_code_df)
 
                 return pie_chart_components, dash_table.DataTable(data=hunt_code_df.to_dict('records'), page_size=10)
             except KeyError:

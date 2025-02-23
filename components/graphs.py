@@ -54,6 +54,7 @@ def create_pie_chart_with_raw_value(row, percent_column, label):
                 line=dict(color='white', width=2),  # Add a white border for better contrast
             ),
             pull=[0.1, 0],  # This pulls the "Success" slice out slightly for depth
+            textfont=dict(color="black", size=25),
         )])
     elif raw_value == 100:
         # If the success percentage is 100%, show only the 'Success' slice
@@ -70,6 +71,7 @@ def create_pie_chart_with_raw_value(row, percent_column, label):
                 line=dict(color='white', width=2),  # Add a white border for better contrast
             ),
             pull=[0.1, 0],  # This pulls the "Success" slice out slightly for depth
+            textfont=dict(color="black", size=25),
         )])
     else:
         # For all other cases, normalize the success percentage
@@ -88,12 +90,13 @@ def create_pie_chart_with_raw_value(row, percent_column, label):
                 line=dict(color='white', width=2),  # Add a white border for better contrast
             ),
             pull=[0.1, 0],  # This pulls the "Success" slice out slightly for depth
+            textfont=dict(color="black", size=25),
         )])
 
         # Update layout for better visuals
     fig.update_layout(
-        showlegend=True,
-        title_text=f"{label} - {row['Hunt Code']} <br> {row['Hunt Dates']} - {row['Hunt Type']}",
+        showlegend=False,
+        title_text=f"{row['Unit']} {label} - {row['Hunt Code']} <br> {row['Hunt Dates']} - {row['Hunt Type']}",
         paper_bgcolor="#f5f5f5",  # Light gray background for the paper
         plot_bgcolor="#ffffff",  # White background for the plot
         margin=dict(t=40, b=40, l=40, r=40),  # Adjust margins for better spacing

@@ -25,8 +25,29 @@ class GetListFromQuery():
     def get_unit_by_number(some_list, unit_number):
         return [d for d in some_list if unit_number.find(d["Unit"]) != -1]
     
+    def get_only_muzzle(some_list):
+        return [d for d in some_list if d["Hunt Type"] == "Muzzle"]
+
+    def get_only_anylegal(some_list):
+        return [d for d in some_list if d["Hunt Type"] == "Any Legal"]
+
     def get_all_by_bag(some_list, bag):
         return [d for d in some_list if (d["Bag"].__contains__("{}".format(bag)))]
+
+def drop_l123tdttdta(result_set):
+    try:
+        df_display = pd.DataFrame(result_set)
+        df_display = df_display.drop(columns=["Licenses"])
+        # df_display = df_display.drop(columns=["1st_resident"])
+        # df_display = df_display.drop(columns=["2nd_resident"])
+        # df_display = df_display.drop(columns=["3rd_resident"])
+        # df_display = df_display.drop(columns=["Total_resident"])
+        # df_display = df_display.drop(columns=["Resident_successfull_draw_total"])
+        df_display = df_display.drop(columns=["Total_drawn"])
+        df_display = df_display.drop(columns=["total_allocation_of_available_tags"])
+    except KeyError:
+        pass
+    return df_display
 
 def drop_success(result_set):
     try:
