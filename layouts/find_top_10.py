@@ -1,9 +1,23 @@
-from dash import dcc, html, Input, Output, State, callback, dash_table
+import dash
+from dash import dcc, html, Input, Output, State, callback, dash_table, callback_context
 import pandas as pd
 import re
 from components import create_pie_chart_with_raw_value, create_choice_table
 from data_handlers.query_odds import drop_success, filter_on_boolean_switches, get_df_for_pie_chart, parser_func
 from models import Residency, SuccessPercentages, PercentSuccess, SuccessTotals, Choice, Bag
+
+# Specify the exact order of columns as required, including 'percent_success'
+columns_to_retain_in_order = ['Unit', 'top_10_result_type', 'Hunt Code', 'Hunt Dates', 'Bag', 'Hunt Type',
+        'Total_all_submissions', 'Total_drawn',
+        'total_allocation_of_available_tags', 'percent_success'  # Add the 'percent_success' column explicitly
+]
+
+# Define your order
+desired_order = [
+    'resident_percent_success', 'resident_1stDraw_percent_success', 'resident_2ndDraw_percent_success', 'resident_3rdDraw_percent_success',
+    'nonresident_percent_success', 'nonresident_1stDraw_percent_success', 'nonresident_2ndDraw_percent_success', 'nonresident_3rdDraw_percent_success',
+    'outfitter_percent_success', 'outfitter_1stDraw_percent_success', 'outfitter_2ndDraw_percent_success', 'outfitter_3rdDraw_percent_success'
+]
 
 find_top_10_layout = html.Div([
     dcc.Store(id="top_10_results"),
@@ -67,7 +81,7 @@ def create_all_percent_success():
     for new_column, total_success, total_submission in column_mappings:
         # For each mapping, create a dictionary with the required structure
         success_dict = {
-            "new_column": new_column,
+            "percent_success": new_column,
             "total_success": total_success,
             "total_submission": total_submission
         }
@@ -82,7 +96,7 @@ def apply_all_percent_success_to_df(filtered_df):
     success_dict_list = create_all_percent_success()
     # Iterate through each dictionary in success_dict_list and update the filtered_df
     for success_dict in success_dict_list:
-        new_column = success_dict["new_column"]
+        new_column = success_dict["percent_success"]
         total_success = success_dict["total_success"]
         total_submission = success_dict["total_submission"]
         # Update the DataFrame with the calculated percentage for this mapping
@@ -98,34 +112,91 @@ def get_top_10_percent_success(filtered_df, new_column):
     top_10_df = top_10_df.drop_duplicates(subset=['Hunt Code', 'Licenses', 'Bag'])  # Remove duplicates
     return top_10_df
 
-
 def create_top_10_percent_success_dfs(filtered_df):
     """
-    Create a list of DataFrames, each containing the top 10 largest percent values for each new_column.
+    Create a dictionary of DataFrames, each containing the top 10 largest percent values for each new_column.
     """
     success_dict_list = create_all_percent_success()  # Get the list of dictionaries
-    
-    # List to store the top 10 DataFrames for each new_column
-    top_10_dfs = []
+    # Dictionary to store the top 10 DataFrames for each new_column
+    top_10_dfs = {}
 
     # Iterate over each dictionary in success_dict_list
     for success_dict in success_dict_list:
-        new_column = success_dict["new_column"]
-        
+        new_column = success_dict["percent_success"]
+
         # Get the top 10 DataFrame for this new_column
         top_10_df = get_top_10_percent_success(filtered_df, new_column)
+
+        # Store the top 10 DataFrame in the dictionary with the column name as the key
+        top_10_dfs[new_column] = top_10_df
+
+    return top_10_dfs  # Return the dictionary of DataFrames
+
+
+def get_data(animal_choice_deer, animal_choice_elk, proclamation_results):
+    query_result_df = get_odds_summary(animal_choice_deer, animal_choice_elk)
+    proclamation_results_df = pd.DataFrame(proclamation_results)
+    return query_result_df, proclamation_results_df
+
+
+def merge_and_process_data(query_result_df, proclamation_results_df):
+    # Merge the dataframes based on Hunt Code, Licenses, and Bag
+    filtered_df = pd.merge(query_result_df, proclamation_results_df, on=['Hunt Code', 'Licenses', 'Bag'], how='inner')
+    filtered_df = filtered_df.drop_duplicates(subset=['Hunt Code', 'Licenses', 'Bag'])
+    filtered_df = apply_all_percent_success_to_df(filtered_df)  # Assuming this is a function that adds success rates
+    return filtered_df
+
+
+def filter_by_selected_units(filtered_df, unit_number_group):
+    if unit_number_group:
+        selected_units = [unit.split(' ')[1] for unit in unit_number_group]
+        filtered_df = filtered_df[filtered_df['Unit'].apply(lambda x: any(unit in x for unit in selected_units))]
+    return filtered_df
+
+
+def process_top_10_dfs(top_10_dfs):
+    top_10_list = []
+
+    # Iterate through the top_10_dfs dictionary and process each DataFrame
+    for new_column, top_10_df in top_10_dfs.items():
+        # Add the 'percent_success' column to the DataFrame
+        top_10_df['percent_success'] = top_10_df[new_column]
         
-        # Append the top 10 DataFrame to the list
-        top_10_dfs.append(top_10_df)
+        # Add the 'top_10_result_type' column with the name of the current column
+        top_10_df['top_10_result_type'] = new_column
 
-    # Concatenate all top 10 DataFrames and drop duplicates
-    if len(top_10_dfs) > 0:  # Ensure there is at least one DataFrame to concatenate
-        top_10_df_combined = pd.concat(top_10_dfs, ignore_index=True).drop_duplicates(subset=['Hunt Code', 'Licenses', 'Bag'])
-    else:
-        top_10_df_combined = pd.DataFrame()  # Return an empty DataFrame if no data
+        # Ensure we select the columns in the specified order, including 'percent_success'
+        top_10_df = top_10_df[columns_to_retain_in_order]
 
-    return top_10_df_combined
+        # Convert the DataFrame to a list of dictionaries and extend the top_10_list
+        top_10_list.extend(top_10_df.to_dict('records'))
 
+    return top_10_list
+
+
+def generate_columns_for_datatable():
+    # Return the columns in the format needed for the DataTable
+    return [{"name": col, "id": col} for col in columns_to_retain_in_order]
+
+
+def generate_columns_to_retain_by_type(top_10_dfs, include_numeric=True, include_non_numeric=False):
+    columns_to_retain = set()  # Using a set to avoid duplicate columns
+
+    # Iterate over each DataFrame in the dictionary
+    for new_column, df in top_10_dfs.items():
+        # Include numeric columns (e.g., integers, floats)
+        if include_numeric:
+            columns_to_retain.update(df.select_dtypes(include=['number']).columns.tolist())
+        
+        # Include non-numeric columns (e.g., strings, dates)
+        if include_non_numeric:
+            columns_to_retain.update(df.select_dtypes(exclude=['number']).columns.tolist())
+
+    # Manually add 'Unit' to the columns we want to retain
+    columns_to_retain.add('Unit')
+    
+    # Return the columns as a list
+    return list(columns_to_retain)
 
 
 # Callbacks for finding the top 10 results of the draw
@@ -136,6 +207,7 @@ def find_top_10_callbacks(app):
     )
     def top10_unit_dropdown(proclamation_results):
         return Bag.get_unit_dropdown_from_bag(Bag, 'deer')
+
 
     @app.callback(
         [Output('top10_unit_numbers_group', component_property='options'),
@@ -160,15 +232,6 @@ def find_top_10_callbacks(app):
         else:
             return {},0,0,False,False
         
-    # @app.callback(
-    #     Output("top_10_results", "data"), 
-    #     Input('top_10_results_deer', 'data'),
-    #     Input('top_10_results_elk', 'data'),
-    #     Input('top_10_results_unit', 'data'),
-    #     Input('top_10_results_hunt_type', 'data'),
-    #     allow_duplicate=True)
-    # def display_top_10_results(proclamation_results):
-    #     return []
 
     @app.callback(
         Output('top10-pie-chart-container', 'children'),
@@ -182,6 +245,10 @@ def find_top_10_callbacks(app):
         
         # Convert table data to DataFrame
         df = pd.DataFrame(table_data)
+
+        # Check if 'percent_success' column exists
+        if 'percent_success' not in df.columns:
+            return html.Div("The 'percent_success' column is missing from the data.")
 
         pie_charts_for_selected_rows = []
 
@@ -197,191 +264,134 @@ def find_top_10_callbacks(app):
                 pie_charts_for_selected_rows.append(html.Div(f"No data available for Hunt Code {selected_hunt_code}."))
                 continue
 
-            pie_charts_for_this_hunt_code = []
+            # Get the 'percent_success' value for the selected hunt code (from the first row)
+            row = filtered_df.iloc[0]  # We can use the first row since they are all the same Hunt Code
+            success_value = row['percent_success']  # Access the 'percent_success' column directly
 
-            # List of percent success columns to generate pie charts
-            percent_success_columns = [
-                'resident_percent_success', 'resident_1stDraw_percent_success', 'resident_2ndDraw_percent_success', 'resident_3rdDraw_percent_success',
-                'nonresident_percent_success', 'nonresident_1stDraw_percent_success', 'nonresident_2ndDraw_percent_success', 'nonresident_3rdDraw_percent_success',
-                'outfitter_percent_success', 'outfitter_1stDraw_percent_success', 'outfitter_2ndDraw_percent_success', 'outfitter_3rdDraw_percent_success',
-            ]
-            
-            # Loop through the percent success columns to dynamically generate pie charts
-            for column in percent_success_columns:
-                if column in filtered_df.columns:
-                    # Create the label as Success
-                    label = column.replace("_percent_success", " Success")  # Label for Success
-                    
-                    # Loop through the rows to create pie charts for each percent success column
-                    for _, row in filtered_df.iterrows():
-                        success_value = row[column]
-
-                        # Create pie chart with Success
-                        pie_charts_for_this_hunt_code.append(
-                            dcc.Graph(
-                                figure=create_pie_chart_with_raw_value(
-                                    row, column, label
-                                )
-                            )
-                        )
-
-            if pie_charts_for_this_hunt_code:
+            # Check if the success_value is valid for pie chart creation (non-null, non-zero)
+            if pd.notnull(success_value) and success_value != 0:
                 pie_charts_for_selected_rows.append(
                     html.Div(
-                        children=pie_charts_for_this_hunt_code,
-                        style={'display': 'flex', 'justify-content': 'space-evenly', 'margin-bottom': '20px'}
+                        dcc.Graph(
+                            figure=create_pie_chart_with_raw_value(
+                                row, 'percent_success', 'Success'
+                            )
+                        ),
+                        style={'display': 'flex', 'justify-content': 'center', 'margin-bottom': '20px'}
                     )
                 )
             else:
-                pie_charts_for_selected_rows.append(html.Div(f"No pie charts available for Hunt Code {selected_hunt_code}."))
+                pie_charts_for_selected_rows.append(html.Div(f"No pie chart available for Hunt Code {selected_hunt_code} due to invalid data."))
 
-        # Return all pie charts for the selected rows
+        # Return the pie chart(s) for the selected rows
         return html.Div(children=pie_charts_for_selected_rows)
 
+    @app.callback(
+        Output('top10_result_type_dropdown', 'options'),
+        [Input('search_top_10_unit_group', 'n_clicks'),
+        Input('top10_result_info_table', 'data')],
+        prevent_initial_call=True
+    )
+    def update_dropdown_options(search_top_10_unit_group, data_table):
+        # Get the context of the callback to see which input triggered the callback
+        ctx = callback_context
 
-    # @app.callback(
-    #     [Output('top10_result_info_table', 'columns'),
-    #     Output('top10_result_info_table', 'data')],
-    #     [Input('proclamation_results', 'data'),
-    #     Input('search_top_10_deer', 'n_clicks'),
-    #     Input('top10_unit_numbers', 'value')],
-    #     prevent_initial_call=True
-    # )
-    # def find_top_10_deer(proclamation_results, search_top_10_deer, unit_number):
-    #     # Only proceed if the button is clicked and the data is not None
-    #     if search_top_10_deer and proclamation_results is not None:
-    #         try:
-    #             query_result_df = get_odds_summary()  # This function should return the odds summary for the units
-    #             proclamation_results_df = pd.DataFrame(proclamation_results)
+        # If no input triggered, return empty values (or handle it as needed)
+        if not ctx.triggered:
+            return []
+        
+        # Get the ID of the component that triggered the callback
+        triggered_id = ctx.triggered[0]['prop_id'].split('.')[0]
+        if triggered_id in ['search_top_10_unit_group']:
+                top_10_result_type_list = []
+                for entry in data_table:
+                    top_10_result_type_list.append(entry['top_10_result_type'])
+                # Extract the result types based on the available data
+                result_types = [item for item in desired_order if item in set(top_10_result_type_list)]
+                options = [{'label': result_type, 'value': result_type} for result_type in result_types]
 
-    #             # Merge the dataframes based on 'Hunt Code', 'Licenses', 'Bag'
-    #             filtered_df = pd.merge(query_result_df, proclamation_results_df, on=['Hunt Code', 'Licenses', 'Bag'], how='inner')
+                return options
 
-    #             # Check for duplicates after merge and remove them
-    #             filtered_df = filtered_df.drop_duplicates(subset=['Hunt Code', 'Licenses', 'Bag'])
-    #             filtered_df = apply_all_percent_success_to_df(filtered_df)
-
-    #             # If unit_number is selected, filter the DataFrame based on the selected units
-    #             if unit_number:
-    #                 # Split the strings in the unit_number list and extract the unit number part (e.g., '2A' from 'Unit 2A')
-    #                 selected_units = [unit.split(' ')[1] for unit in unit_number]
-
-    #                 # Filter the dataframe by checking if 'Unit' contains any of the selected units
-    #                 filtered_df = filtered_df[filtered_df['Unit'].apply(lambda x: any(unit in x for unit in selected_units))]
-
-    #             # Create a list of dataframes containing the top 10 largest percentages found
-    #             top_10_dfs_list = create_top_10_percent_success_dfs(filtered_df)
-
-    #             # Apply necessary filters to the dataframe
-    #             residency_choice = Residency(False, False, False)
-    #             choice_result = Choice(False, False, False, False, False)
-    #             success_total = SuccessTotals(False, False, False)
-    #             success_percentage = SuccessPercentages(False, False, False)
-    #             percent_success = PercentSuccess(True, False, False, False, True, False, False, False, True, False, False, False)
-
-    #             hunt_code_df = filter_on_boolean_switches(top_10_dfs_list, residency_choice, choice_result, success_total, success_percentage, percent_success)
-    #             hunt_code_df = drop_success(hunt_code_df)
-    #             hunt_code_df = hunt_code_df.drop(columns=["Unit/Description"])
-
-    #             # Dynamically generate columns from the DataFrame
-    #             columns = [{"name": col, "id": col} for col in hunt_code_df.columns]
-
-    #             # Return columns and data to be displayed in the DataTable
-    #             return columns, hunt_code_df.to_dict('records')
-
-    #         except Exception as e:
-    #             print(f"Error: {e}")
-    #             return [], []  # Return empty columns and data in case of error
-
-    #     # Return empty columns and data if the search button isn't clicked or data is invalid
-    #     return [], []
+        return []  # Return empty options if no valid input or search hasn't been clicked yet
 
 
     @app.callback(
         [Output('top10_result_info_table', 'columns'),
         Output('top10_result_info_table', 'data')],
-        [Input(component_id='animal_choice_deer_unit_group', component_property='on'),
-        Input(component_id='animal_choice_elk_unit_group', component_property='on'),
+        [Input('animal_choice_deer_unit_group', 'on'),
+        Input('animal_choice_elk_unit_group', 'on'),
         Input('proclamation_results', 'data'),
         Input('search_top_10_unit_group', 'n_clicks'),
-        Input('top10_unit_numbers_group', 'value')],
-        prevent_initial_call=True
+        Input('top10_unit_numbers_group', 'value'),
+        Input('top10_result_type_dropdown', 'value')]  # Keep only relevant inputs
     )
-    def find_top_10_unit_group(animal_choice_deer, animal_choice_elk, proclamation_results, search_top_10_unit_group, unit_number_group):
-        # Only proceed if the button is clicked and the data is not None
-        if search_top_10_unit_group and proclamation_results is not None:
-            try:
-                query_result_df = get_odds_summary(animal_choice_deer, animal_choice_elk)  # This function should return the odds summary for the units
-                proclamation_results_df = pd.DataFrame(proclamation_results)
-                print(proclamation_results_df)
-                # Merge the dataframes based on 'Hunt Code', 'Licenses', 'Bag'
-                filtered_df = pd.merge(query_result_df, proclamation_results_df, on=['Hunt Code', 'Licenses', 'Bag'], how='inner')
+    def find_top_10_unit_group(animal_choice_deer, animal_choice_elk, proclamation_results, 
+                                search_top_10_unit_group, unit_number_group, selected_result_type):
+        # Get the context of the callback to see which input triggered the callback
+        ctx = callback_context
 
-                # Check for duplicates after merge and remove them
-                filtered_df = filtered_df.drop_duplicates(subset=['Hunt Code', 'Licenses', 'Bag'])
-                filtered_df = apply_all_percent_success_to_df(filtered_df)
+        # If no input triggered, return empty values (or handle it as needed)
+        if not ctx.triggered:
+            return [], []
 
-                # If unit_number is selected, filter the DataFrame based on the selected units
-                if unit_number_group:
-                    print([unit.split(' ')[1] for unit in unit_number_group])
-                    # Split the strings in the unit_number list and extract the unit number part (e.g., '2A' from 'Unit 2A')
-                    selected_units = [unit.split(' ')[1] for unit in unit_number_group]
+        # Get the ID of the component that triggered the callback
+        triggered_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
-                    # Filter the dataframe by checking if 'Unit' contains any of the selected units
-                    filtered_df = filtered_df[filtered_df['Unit'].apply(lambda x: any(unit in x for unit in selected_units))]
+        # Check if a meaningful input was triggered to update the table data
+        if triggered_id == 'top10_result_type_dropdown' and selected_result_type:
+            # Process the data only if the dropdown is actually selected (avoid clearing table)
+            query_result_df, proclamation_results_df = get_data(animal_choice_deer, animal_choice_elk, proclamation_results)
+            filtered_df = merge_and_process_data(query_result_df, proclamation_results_df)
+            filtered_df = filter_by_selected_units(filtered_df, unit_number_group)
 
-                # Create a list of dataframes containing the top 10 largest percentages found
-                top_10_dfs_list = create_top_10_percent_success_dfs(filtered_df)
-                # top_10_dfs_list = get_top_10_percent_success(top_10_dfs_list, 'resident_percent_success')
-                # Apply necessary filters to the dataframe
-                residency_choice = Residency(False, False, False)
-                choice_result = Choice(False, False, False, False, False)
-                success_total = SuccessTotals(False, False, False)
-                success_percentage = SuccessPercentages(False, False, False)
-                percent_success = PercentSuccess(True, False, False, False, True, False, False, False, True, False, False, False)
+            # Generate the top 10 DataFrames and process them
+            top_10_dfs = create_top_10_percent_success_dfs(filtered_df)
+            table_data = process_top_10_dfs(top_10_dfs)
 
-                hunt_code_df = filter_on_boolean_switches(top_10_dfs_list, residency_choice, choice_result, success_total, success_percentage, percent_success)
-                hunt_code_df = drop_success(hunt_code_df)
-                hunt_code_df = hunt_code_df.drop(columns=["Unit/Description"])
+            # Ensure the table data is not empty
+            if not table_data:
+                print("Error: Table data is empty.")
+                return [], []
 
-                # Dynamically generate columns from the DataFrame
-                columns = [{"name": col, "id": col} for col in hunt_code_df.columns]
+            # Filter the table data based on the selected result type
+            df = pd.DataFrame(table_data)  # Convert to DataFrame to filter
+            
+            # Normalize and filter by the selected result type
+            df['top_10_result_type'] = df['top_10_result_type'].str.strip().str.lower()
+            filtered_data = df[df['top_10_result_type'] == selected_result_type.lower()]
 
-                # Return columns and data to be displayed in the DataTable
-                return columns, hunt_code_df.to_dict('records')
+            return generate_columns_for_datatable(), filtered_data.to_dict('records')
 
-            except Exception as e:
-                print(f"Error: {e}")
-                return [], []  # Return empty columns and data in case of error
+        # Logic for handling other inputs (like search or unit group selection)
+        elif triggered_id in ['search_top_10_unit_group', 'top10_unit_numbers_group']:
+            if search_top_10_unit_group and proclamation_results is not None:
+                try:
+                    query_result_df, proclamation_results_df = get_data(animal_choice_deer, animal_choice_elk, proclamation_results)
+                    filtered_df = merge_and_process_data(query_result_df, proclamation_results_df)
+                    filtered_df = filter_by_selected_units(filtered_df, unit_number_group)
 
-        # Return empty columns and data if the search button isn't clicked or data is invalid
-        return [], []
+                    top_10_dfs = create_top_10_percent_success_dfs(filtered_df)
+                    top_10_list = process_top_10_dfs(top_10_dfs)
+
+                    return generate_columns_for_datatable(), top_10_list
+
+                except Exception as e:
+                    print(f"Error: {e}")
+                    return [], []  # Return empty columns and data in case of error
+
+        # If no conditions match, avoid clearing the table
+        return dash.no_update, dash.no_update
 
 
 
 
-    
-    # @app.callback(
-    #     Output("top_10_results_elk", "data"), 
-    #     Input('proclamation_results', 'data'),
-    #     Input(component_id='unit_number', component_property='value'),
-    #     allow_duplicate=True)
-    # def find_top_10_elk(proclamation_results):
-    #     return []
-    
-    # @app.callback(
-    #     Output("top_10_results_unit", "data"), 
-    #     Input('proclamation_results', 'data'),
-    #     Input(component_id='unit_number', component_property='value'),
-    #     allow_duplicate=True)
-    # def find_top_10_unit(proclamation_results, unit):
-    #     return []
 
-    # @app.callback(
-    #     Output("top_10_results_hunt_type", "data"), 
-    #     Input('proclamation_results', 'data'),
-    #     Input(component_id='weapon_dropdown', component_property='value'),
-    #     allow_duplicate=True)
-    # def find_top_10_hunt_type(proclamation_results, hunt_type):
-    #     return []
+
+
+
+
+
+
+
+
 

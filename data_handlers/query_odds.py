@@ -34,9 +34,8 @@ class GetListFromQuery():
     def get_all_by_bag(some_list, bag):
         return [d for d in some_list if (d["Bag"].__contains__("{}".format(bag)))]
 
-def drop_l123tdttdta(result_set):
+def drop_l123tdttdta(df_display):
     try:
-        df_display = pd.DataFrame(result_set)
         df_display = df_display.drop(columns=["Licenses"])
         # df_display = df_display.drop(columns=["1st_resident"])
         # df_display = df_display.drop(columns=["2nd_resident"])
@@ -49,9 +48,8 @@ def drop_l123tdttdta(result_set):
         pass
     return df_display
 
-def drop_success(result_set):
+def drop_success(df_display):
     try:
-        df_display = pd.DataFrame(result_set)
         df_display = df_display.drop(columns=["resident_1st_success"])
         df_display = df_display.drop(columns=["nonresident_1st_success"])
         df_display = df_display.drop(columns=["outfitter_1st_success"])
@@ -71,7 +69,7 @@ def drop_success(result_set):
         pass
     return df_display
 
-def drop_percent_success(result_set):
+def drop_percent_success(df_display):
     try:
         df_display = df_display.drop(columns=["resident_percent_success"])
         df_display = df_display.drop(columns=["resident_1stDraw_percent_success"])
@@ -81,9 +79,8 @@ def drop_percent_success(result_set):
         pass
     return df_display
 
-def filter_on_boolean_switches(filtered_list, residency_choice, choice_result, success_total, success_percentage, percent_success):
-    df = pd.DataFrame(filtered_list)
-    
+def filter_on_boolean_switches(df, residency_choice, choice_result, success_total, success_percentage, percent_success):
+    print(df.columns)
     try:
         if not(residency_choice.resident):
             df = df.drop(columns=["1st_resident", "2nd_resident", "3rd_resident", "Total_resident"])
@@ -165,8 +162,8 @@ def query_odds(odds_summary, unit_number, residency_choice, choice_result, succe
 
     if not(add_private):
         filtered_list = GetListFromQuery.get_no_private(filtered_list)
-    if not(add_youth):
-        filtered_list = GetListFromQuery.get_no_youth(filtered_list)
+    # if not(add_youth):
+    #     filtered_list = GetListFromQuery.get_no_youth(filtered_list)
     filtered_list = filter_on_boolean_switches(filtered_list, residency_choice, choice_result, success_total, success_percentage, percent_success)
     return filtered_list
 

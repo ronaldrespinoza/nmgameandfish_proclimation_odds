@@ -179,7 +179,7 @@ def filtering_table_callbacks(app):
                 pie_chart_components = []
 
                 #removed rows if not hunt type muzzle or any legal
-                # valid_values = ["Muzzle", "Muzzle – NM", "Any Legal", "Any Legal -"]
+                # valid_values = ["Muzzle", "Muzzle – NM", "Any Legal", "Any Legal -", "Any Legal - NM"]
                 # filtered_df = filtered_df[filtered_df['Hunt Type'].isin(valid_values)]
 
                 # Loop through each unique Hunt Code to generate pie charts for each row
