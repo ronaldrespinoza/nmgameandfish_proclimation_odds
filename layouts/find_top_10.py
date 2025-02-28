@@ -286,8 +286,10 @@ def find_top_10_callbacks(app):
         # Return the pie chart(s) for the selected rows
         return html.Div(children=pie_charts_for_selected_rows)
 
+
     @app.callback(
         Output('top10_result_type_dropdown', 'options'),
+        Output('top10_hunt_type_dropdown', 'options'),
         [Input('search_top_10_unit_group', 'n_clicks'),
         Input('top10_result_info_table', 'data')],
         prevent_initial_call=True
@@ -298,21 +300,25 @@ def find_top_10_callbacks(app):
 
         # If no input triggered, return empty values (or handle it as needed)
         if not ctx.triggered:
-            return []
+            return [], []
         
         # Get the ID of the component that triggered the callback
         triggered_id = ctx.triggered[0]['prop_id'].split('.')[0]
         if triggered_id in ['search_top_10_unit_group']:
                 top_10_result_type_list = []
+                top_10_hunt_type_list = []
                 for entry in data_table:
                     top_10_result_type_list.append(entry['top_10_result_type'])
+                    top_10_hunt_type_list.append(entry['Hunt Type'])
                 # Extract the result types based on the available data
                 result_types = [item for item in desired_order if item in set(top_10_result_type_list)]
-                options = [{'label': result_type, 'value': result_type} for result_type in result_types]
+                hunt_type_types = list(set(top_10_hunt_type_list))
+                result_options = [{'label': result_type, 'value': result_type} for result_type in result_types]
+                hunt_type_options = [{'label': hunt_type, 'value': hunt_type} for hunt_type in hunt_type_types]
 
-                return options
+                return result_options, hunt_type_options
 
-        return []  # Return empty options if no valid input or search hasn't been clicked yet
+        return [], []  # Return empty options if no valid input or search hasn't been clicked yet
 
 
     @app.callback(
@@ -323,10 +329,11 @@ def find_top_10_callbacks(app):
         Input('proclamation_results', 'data'),
         Input('search_top_10_unit_group', 'n_clicks'),
         Input('top10_unit_numbers_group', 'value'),
-        Input('top10_result_type_dropdown', 'value')]  # Keep only relevant inputs
+        Input('top10_result_type_dropdown', 'value'),
+        Input('top10_hunt_type_dropdown', 'value')]  # Keep only relevant inputs
     )
     def find_top_10_unit_group(animal_choice_deer, animal_choice_elk, proclamation_results, 
-                                search_top_10_unit_group, unit_number_group, selected_result_type):
+                                search_top_10_unit_group, unit_number_group, selected_result_type, selected_hunt_type):
         # Get the context of the callback to see which input triggered the callback
         ctx = callback_context
 
@@ -359,6 +366,31 @@ def find_top_10_callbacks(app):
             # Normalize and filter by the selected result type
             df['top_10_result_type'] = df['top_10_result_type'].str.strip().str.lower()
             filtered_data = df[df['top_10_result_type'] == selected_result_type.lower()]
+
+            return generate_columns_for_datatable(), filtered_data.to_dict('records')
+
+        # Check if a meaningful input was triggered to update the table data
+        elif triggered_id == 'top10_hunt_type_dropdown' and selected_hunt_type:
+            # Process the data only if the dropdown is actually selected (avoid clearing table)
+            query_result_df, proclamation_results_df = get_data(animal_choice_deer, animal_choice_elk, proclamation_results)
+            filtered_df = merge_and_process_data(query_result_df, proclamation_results_df)
+            filtered_df = filter_by_selected_units(filtered_df, unit_number_group)
+
+            # Generate the top 10 DataFrames and process them
+            top_10_dfs = create_top_10_percent_success_dfs(filtered_df)
+            table_data = process_top_10_dfs(top_10_dfs)
+
+            # Ensure the table data is not empty
+            if not table_data:
+                print("Error: Table data is empty.")
+                return [], []
+
+            # Filter the table data based on the selected result type
+            df = pd.DataFrame(table_data)  # Convert to DataFrame to filter
+            
+            # Normalize and filter by the selected result type
+            df['Hunt Type'] = df['Hunt Type'].str.strip().str.lower()
+            filtered_data = df[df['Hunt Type'] == selected_hunt_type.lower()]
 
             return generate_columns_for_datatable(), filtered_data.to_dict('records')
 

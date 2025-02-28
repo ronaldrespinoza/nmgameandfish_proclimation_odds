@@ -6,26 +6,56 @@ from components.dropdowns import top10_unit_dropdown, available_weapon_dropdown
 from dash import dcc
 
 def create_choice_table():
-    # Row 4 for Unit Group choice (as before)
+    row1 = html.Tr([ 
+        html.Td("Get top 10 odds for Deer", style={"padding-right": "15px", "padding-left": "15px", "padding-top": "10px", "padding-bottom": "10px", "width": "100%"}), 
+        html.Td([dbc.Button('Search', id='search_top_10_deer', n_clicks=0, color="primary", size="sm", className="shadow-btn")], 
+                style={"padding-right": "15px", "padding-left": "15px", "padding-top": "10px", "padding-bottom": "10px", "width": "100%"}), 
+        html.Td("Get top 10 odds for Elk", style={"padding-right": "15px", "padding-left": "15px", "padding-top": "10px", "padding-bottom": "10px", "width": "100%"}), 
+        html.Td([dbc.Button('Search', id='search_top_10_elk', n_clicks=0, color="success", size="sm", className="shadow-btn")], 
+                style={"padding-right": "15px", "padding-left": "15px", "padding-top": "10px", "padding-bottom": "10px", "width": "100%"}), 
+    ]) 
+
+    row2 = html.Tr([ 
+        html.Td("Get top 10 odds based on Unit", style={"padding-right": "15px", "padding-left": "15px", "padding-top": "10px", "padding-bottom": "10px", "width": "100%"}), 
+        html.Td([dbc.Button('Search', id='search_top_10_unit', n_clicks=0, color="info", size="sm", className="shadow-btn")], 
+                style={"padding-right": "15px", "padding-left": "15px", "padding-top": "10px", "padding-bottom": "10px", "width": "100%"}), 
+        html.Td("Get top 10 odds based on Weapon Choice", style={"padding-right": "15px", "padding-left": "15px", "padding-top": "10px", "padding-bottom": "10px", "width": "100%"}), 
+        html.Td([dbc.Button('Search', id='search_top_10_hunt_type', n_clicks=0, color="warning", size="sm", className="shadow-btn")], 
+                style={"padding-right": "15px", "padding-left": "15px", "padding-top": "10px", "padding-bottom": "10px", "width": "100%"}), 
+    ]) 
+
+    # Create row with multi-select dropdown for unit numbers
+    row3 = html.Tr([ 
+        html.Td([dcc.Dropdown(
+            id='top10_unit_numbers',
+            options=[{'label': str(i), 'value': i} for i in range(1, 21)],  # Example range of units (1-20)
+            multi=False,  # Enable multi-selection
+            placeholder="Select units...",
+            style={"width": "100%"}
+        )], colSpan=2, style={"padding-top": "15px", "padding-bottom": "15px", "width": "100%"}), 
+        html.Td([]), 
+        html.Td([available_weapon_dropdown()], style={"padding-top": "15px", "padding-bottom": "15px", "width": "100%"}), 
+    ]) 
+
     row4 = html.Tr([ 
         html.Td("Get top 10 odds based on Unit Group", style={"padding-right": "15px", "padding-left": "15px", "padding-top": "10px", "padding-bottom": "10px", "width": "100%"}), 
         html.Td([html.Td("Deer"),
-                    html.Td([ 
+                    html.Td([
                         daq.BooleanSwitch(
                             id='animal_choice_deer_unit_group',
                             on=True,
                         ),
                         html.Button(id='deer_unit_group_button',n_clicks=0,style={'display': 'none'})
-                    ]),
+                        ]),
                     html.Td("Elk"),
-                    html.Td([ 
+                    html.Td([
                         daq.BooleanSwitch(
                             id='animal_choice_elk_unit_group',
                             on=False,
                         ),
                         html.Button(id='elk_unit_group_button',n_clicks=0,style={'display': 'none'})
-                    ])
-                ]), 
+                        ])
+                ]),
         html.Td([dcc.Dropdown(
             id='top10_unit_numbers_group',
             options=[{'label': str(i), 'value': i} for i in range(1, 21)],  # Example range of units (1-20)
@@ -47,11 +77,19 @@ def create_choice_table():
                 placeholder="Select result type...",
                 style={"width": "100%"}
             )
-        ], colSpan=3, style={"padding-top": "15px", "padding-bottom": "15px", "width": "100%"})
+        ], colSpan=1, style={"padding-top": "15px", "padding-bottom": "15px", "width": "100%"}),
+        html.Td("Select Top 10 Hunt Type", style={"padding-right": "15px", "padding-left": "15px", "padding-top": "10px", "padding-bottom": "10px", "width": "100%"}),
+        html.Td([
+            dcc.Dropdown(
+                id='top10_hunt_type_dropdown',
+                options=[],  # Empty initially, will be populated dynamically
+                placeholder="Select hunt type...",
+                style={"width": "100%"}
+            )
+        ], colSpan=1, style={"padding-top": "15px", "padding-bottom": "15px", "width": "100%"})
     ])
-
-    # Define table body with row4 and the new row5
-    table_body = html.Tbody([row4, row5])
+    # Define table body
+    table_body = html.Tbody([row1]), html.Tbody([row4]), html.Tbody([row5]), html.Tbody([html.Tr([])])
 
     # Wrap the table in a div with the responsive class for mobile-friendliness
     table = html.Div( 
@@ -64,8 +102,6 @@ def create_choice_table():
     )
 
     return table
-
-
 
 
 def create_filtering_table():
