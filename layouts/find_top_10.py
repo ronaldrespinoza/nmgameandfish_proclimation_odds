@@ -199,6 +199,65 @@ def generate_columns_to_retain_by_type(top_10_dfs, include_numeric=True, include
     return list(columns_to_retain)
 
 
+def update_table_based_on_result_type(animal_choice_deer, animal_choice_elk, proclamation_results, 
+                                      unit_number_group, selected_result_type):
+    # Process the data based on selected result type
+    query_result_df, proclamation_results_df = get_data(animal_choice_deer, animal_choice_elk, proclamation_results)
+    filtered_df = merge_and_process_data(query_result_df, proclamation_results_df)
+    filtered_df = filter_by_selected_units(filtered_df, unit_number_group)
+
+    # Generate the top 10 DataFrames and process them
+    top_10_dfs = create_top_10_percent_success_dfs(filtered_df)
+    table_data = process_top_10_dfs(top_10_dfs)
+
+    if not table_data:
+        print("Error: Table data is empty.")
+        return [], []
+
+    # Normalize and filter by the selected result type
+    df = pd.DataFrame(table_data)
+    df['top_10_result_type'] = df['top_10_result_type'].str.strip().str.lower()
+    filtered_data = df[df['top_10_result_type'] == selected_result_type.lower()]
+
+    return generate_columns_for_datatable(), filtered_data.to_dict('records')
+
+
+def update_table_based_on_hunt_type(animal_choice_deer, animal_choice_elk, proclamation_results, 
+                                    unit_number_group, selected_hunt_type):
+    # Process the data based on selected hunt type
+    query_result_df, proclamation_results_df = get_data(animal_choice_deer, animal_choice_elk, proclamation_results)
+    filtered_df = merge_and_process_data(query_result_df, proclamation_results_df)
+    filtered_df = filter_by_selected_units(filtered_df, unit_number_group)
+
+    # Generate the top 10 DataFrames and process them
+    top_10_dfs = create_top_10_percent_success_dfs(filtered_df)
+    table_data = process_top_10_dfs(top_10_dfs)
+
+    if not table_data:
+        print("Error: Table data is empty.")
+        return [], []
+
+    # Normalize and filter by the selected hunt type
+    df = pd.DataFrame(table_data)
+    df['Hunt Type'] = df['Hunt Type'].str.strip().str.lower()
+    filtered_data = df[df['Hunt Type'] == selected_hunt_type.lower()]
+
+    return generate_columns_for_datatable(), filtered_data.to_dict('records')
+
+
+def update_table_based_on_search(animal_choice_deer, animal_choice_elk, proclamation_results, unit_number_group):
+    # Process the data based on search criteria or unit group selection
+    query_result_df, proclamation_results_df = get_data(animal_choice_deer, animal_choice_elk, proclamation_results)
+    filtered_df = merge_and_process_data(query_result_df, proclamation_results_df)
+    filtered_df = filter_by_selected_units(filtered_df, unit_number_group)
+
+    # Generate the top 10 DataFrames and process them
+    top_10_dfs = create_top_10_percent_success_dfs(filtered_df)
+    top_10_list = process_top_10_dfs(top_10_dfs)
+
+    return generate_columns_for_datatable(), top_10_list
+
+
 # Callbacks for finding the top 10 results of the draw
 def find_top_10_callbacks(app):
     @app.callback(
@@ -332,87 +391,33 @@ def find_top_10_callbacks(app):
         Input('top10_result_type_dropdown', 'value'),
         Input('top10_hunt_type_dropdown', 'value')]  # Keep only relevant inputs
     )
-    def find_top_10_unit_group(animal_choice_deer, animal_choice_elk, proclamation_results, 
+    def find_top_10_unit_group(animal_choice_deer, animal_choice_elk, proclamation_results,
                                 search_top_10_unit_group, unit_number_group, selected_result_type, selected_hunt_type):
-        # Get the context of the callback to see which input triggered the callback
         ctx = callback_context
-
-        # If no input triggered, return empty values (or handle it as needed)
         if not ctx.triggered:
-            return [], []
+            return dash.no_update, dash.no_update
 
-        # Get the ID of the component that triggered the callback
         triggered_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
-        # Check if a meaningful input was triggered to update the table data
+        # If the 'top10_result_type_dropdown' is triggered
         if triggered_id == 'top10_result_type_dropdown' and selected_result_type:
-            # Process the data only if the dropdown is actually selected (avoid clearing table)
-            query_result_df, proclamation_results_df = get_data(animal_choice_deer, animal_choice_elk, proclamation_results)
-            filtered_df = merge_and_process_data(query_result_df, proclamation_results_df)
-            filtered_df = filter_by_selected_units(filtered_df, unit_number_group)
+            return update_table_based_on_result_type(animal_choice_deer, animal_choice_elk, proclamation_results,
+                                                    unit_number_group, selected_result_type)
 
-            # Generate the top 10 DataFrames and process them
-            top_10_dfs = create_top_10_percent_success_dfs(filtered_df)
-            table_data = process_top_10_dfs(top_10_dfs)
-
-            # Ensure the table data is not empty
-            if not table_data:
-                print("Error: Table data is empty.")
-                return [], []
-
-            # Filter the table data based on the selected result type
-            df = pd.DataFrame(table_data)  # Convert to DataFrame to filter
-            
-            # Normalize and filter by the selected result type
-            df['top_10_result_type'] = df['top_10_result_type'].str.strip().str.lower()
-            filtered_data = df[df['top_10_result_type'] == selected_result_type.lower()]
-
-            return generate_columns_for_datatable(), filtered_data.to_dict('records')
-
-        # Check if a meaningful input was triggered to update the table data
+        # If the 'top10_hunt_type_dropdown' is triggered
         elif triggered_id == 'top10_hunt_type_dropdown' and selected_hunt_type:
-            # Process the data only if the dropdown is actually selected (avoid clearing table)
-            query_result_df, proclamation_results_df = get_data(animal_choice_deer, animal_choice_elk, proclamation_results)
-            filtered_df = merge_and_process_data(query_result_df, proclamation_results_df)
-            filtered_df = filter_by_selected_units(filtered_df, unit_number_group)
+            return update_table_based_on_hunt_type(animal_choice_deer, animal_choice_elk, proclamation_results,
+                                                unit_number_group, selected_hunt_type)
 
-            # Generate the top 10 DataFrames and process them
-            top_10_dfs = create_top_10_percent_success_dfs(filtered_df)
-            table_data = process_top_10_dfs(top_10_dfs)
-
-            # Ensure the table data is not empty
-            if not table_data:
-                print("Error: Table data is empty.")
-                return [], []
-
-            # Filter the table data based on the selected result type
-            df = pd.DataFrame(table_data)  # Convert to DataFrame to filter
-            
-            # Normalize and filter by the selected result type
-            df['Hunt Type'] = df['Hunt Type'].str.strip().str.lower()
-            filtered_data = df[df['Hunt Type'] == selected_hunt_type.lower()]
-
-            return generate_columns_for_datatable(), filtered_data.to_dict('records')
-
-        # Logic for handling other inputs (like search or unit group selection)
+        # If the 'search_top_10_unit_group' or 'top10_unit_numbers_group' is triggered
         elif triggered_id in ['search_top_10_unit_group', 'top10_unit_numbers_group']:
-            if search_top_10_unit_group and proclamation_results is not None:
-                try:
-                    query_result_df, proclamation_results_df = get_data(animal_choice_deer, animal_choice_elk, proclamation_results)
-                    filtered_df = merge_and_process_data(query_result_df, proclamation_results_df)
-                    filtered_df = filter_by_selected_units(filtered_df, unit_number_group)
+            if search_top_10_unit_group and proclamation_results:
+                return update_table_based_on_search(animal_choice_deer, animal_choice_elk, proclamation_results,
+                                                    unit_number_group)
 
-                    top_10_dfs = create_top_10_percent_success_dfs(filtered_df)
-                    top_10_list = process_top_10_dfs(top_10_dfs)
-
-                    return generate_columns_for_datatable(), top_10_list
-
-                except Exception as e:
-                    print(f"Error: {e}")
-                    return [], []  # Return empty columns and data in case of error
-
-        # If no conditions match, avoid clearing the table
+        # Return unchanged if no conditions match
         return dash.no_update, dash.no_update
+
 
 
 
